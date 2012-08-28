@@ -158,6 +158,24 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      */
     doneText: "Done",
 	
+	/** api: config[ascText]
+     *  ``String``
+     *  Text for asc header menu button (i18n).
+     */
+    ascText: "Sort ascenging",
+	
+	/** api: config[descText]
+     *  ``String``
+     *  Text for desc header menu button  (i18n).
+     */
+    descText: "Sort descending",
+	
+	/** api: config[colText]
+     *  ``String``
+     *  Text for column header menu button  (i18n).
+     */
+    colText: "Columns",
+	
 	/** api: config[windowTitle]
      *  ``String``
      *  Windows title (i18n).
@@ -205,6 +223,11 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      */
     selectedSource: null,
 
+	/** private: property[windowsWidth]  
+     */
+    windowsWidth: 900,
+	
+	
     /** private: method[constructor]
      */
     constructor: function(config) {
@@ -299,7 +322,9 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             store: this.target.layerSources[data[idx][0]].store,
             autoScroll: true,
 			title: this.availableLayersText,
+			width: this.windowsWidth/2,
             flex: 1,
+			region: "west",
             autoExpandColumn: "title",
             plugins: [expander],
             colModel: new Ext.grid.ColumnModel([
@@ -342,7 +367,15 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 				}
             ]),
             listeners: {
-                scope: this
+                scope: this,				
+				afterrender: function() {
+					var menu = capGridPanel.getView().hmenu.items;				
+ 					for (var i in menu.items) {
+						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
+						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
+						else if (menu.items[i].itemId=="columns") menu.items[i].text = this.colText;
+					}
+				}
             }
         });
 		
@@ -358,6 +391,8 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             autoScroll: true,
 			title: this.chosenLayersText,
             flex: 1,
+			width: this.windowsWidth/2,
+			region: 'center',
 			clicksToEdit:1,
             autoExpandColumn: "title",
             colModel: new Ext.grid.ColumnModel([
@@ -405,8 +440,17 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 				}
             ]),
             listeners: {
-                scope: this
-            }
+                scope: this,				
+				afterrender: function() {
+					var menu = animationLayersPanel.getView().hmenu.items;				
+ 					for (var i in menu.items) {
+						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
+						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
+						else if (menu.items[i].itemId=="columns") menu.items[i].text = this.colText;
+					}
+				}
+			}
+            
         });
 		
 		// read: "move record up in store? - true/false"
@@ -763,11 +807,11 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 		
         var items = {
             xtype: "container",
-            region: "center",
-            layout: "hbox",
-            layoutConfig: {
-                align: 'stretch'
-            },
+            layout:'border',
+			region: 'center',
+			defaults: {
+				split: true,
+			},
             items: [capGridPanel, animationLayersPanel]
         };
         if (this.instructionsText) {
@@ -812,10 +856,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             })
         ];
         
-        var uploadButton = this.createUploadButton();
-        if (uploadButton) {
-            bbarItems.unshift(uploadButton);
-        }
+        
 
         //TODO use addOutput here instead of just applying outputConfig
         this.capGrid = new Ext.Window(Ext.apply({
@@ -823,7 +864,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             closeAction: "hide",
             layout: "border",
             height: 350,
-            width: 900,
+            width: this.windowsWidth,
             modal: true,
             items: items,
             tbar: capGridToolbar,
@@ -879,150 +920,6 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
         scope: this
       } )
 
-    },
-
-    /** private: method[createUploadButton]
-     *  If this tool is provided an ``upload`` property, a button will be created
-     *  that launches a window with a :class:`gxp.LayerUploadPanel`.
-     */
-    createUploadButton: function() {
-        var button;
-        var uploadConfig = this.initialConfig.upload;
-        // the url will be set in the sourceselected sequence
-        var url=this.target.uploadUrl;
-        if (uploadConfig) {
-            if (typeof uploadConfig === "boolean") {
-                uploadConfig = {};
-            }
-            button = new Ext.Button({
-                xtype: "button",
-                text: this.uploadText,
-                iconCls: "gxp-icon-filebrowse",
-                //hidden: true,
-                handler: function() {
-                    var panel = new gxp.LayerUploadPanel(Ext.apply({
-                        url: url,
-                        width: 350,
-                        border: false,
-                        bodyStyle: "padding: 10px 10px 0 10px;",
-                        frame: true,
-                        labelWidth: 65,
-                        defaults: {
-                            anchor: "95%",
-                            allowBlank: false,
-                            msgTarget: "side"
-                        },
-                        listeners: {
-                            uploadcomplete: function(panel, detail) {
-                                var layers = detail["import"].tasks[0].items;
-                                var names = {}, resource, layer;
-                                for (var i=0, len=layers.length; i<len; ++i) {
-                                    resource = layers[i].resource;
-                                    layer = resource.featureType || resource.coverage;
-                                    names[layer.namespace.name + ":" + layer.name] = true;
-                                }
-
-                                this.selectOrAddSource(detail, function(){
-                                this.selectedSource.store.load({
-                                    callback: function(records, options, success) {
-                                        var gridPanel, sel;
-                                        if (this.capGrid && this.capGrid.isVisible()) {
-                                            gridPanel = this.capGrid.get(0).get(0);
-                                            sel = gridPanel.getSelectionModel();
-                                            sel.clearSelections();
-                                        }
-                                        // select newly added layers
-                                        var newRecords = [];
-                                        var last = 0;
-                                        this.selectedSource.store.each(function(record, index) {
-                                            if (record.get("name") in names) {
-                                                last = index;
-                                                newRecords.push(record);
-                                            }
-                                        });
-                                        //if (gridPanel) {
-                                            //// this needs to be deferred because the 
-                                            //// grid view has not refreshed yet
-                                            //window.setTimeout(function() {
-                                                //sel.selectRecords(newRecords);
-                                                //gridPanel.getView().focusRow(last);
-                                            //}, 100);
-                                        //} else {
-                                            this.AnimationManager(newRecords, undefined, true);
-                                        //}
-                                    },
-                                    scope: this
-                                });
-                                if (this.outputTarget) {
-                                    panel.hide();
-                                } else {
-                                    win.close();
-                                }
-
-                                });
-
-                            },
-                            scope: this
-                        }
-                    }, uploadConfig));
-                    
-                    var win = new Ext.Window({
-                        title: this.uploadText,
-                        modal: true,
-                        resizable: false,
-                        items: [panel]
-                    });
-                    win.show();
-                },
-                scope: this
-            });
-            
-            var urlCache = {};
-            function getStatus(url, callback, scope) {
-                if (url in urlCache) {
-                    // always call callback after returning
-                    window.setTimeout(function() {
-                        callback.call(scope, urlCache[url]);
-                    }, 0);
-                } else {
-                    Ext.Ajax.request({
-                        url: url,
-                        disableCaching: false,
-                        callback: function(options, success, response) {
-                            var status = response.status;
-                            urlCache[url] = status;
-                            callback.call(scope, status);
-                        }
-                    });
-                }
-            }
-            
-            //this.on({
-                //sourceselected: function(tool, source) {
-                    //button.hide();
-                    //var show = false;
-                    //if (this.isEligibleForUpload(source)) {
-                        //// only works with GeoServer
-                        //// if url is http://example.com/geoserver/ows, we
-                        //// want http://example.com/geoserver/rest.
-                        //var parts = source.url.split("/");
-                        //parts.pop();
-                        //parts.push("rest");
-                        //// this sets the url for the layer upload panel
-                        //url = parts.join("/");
-                        //if (this.target.isAuthorized()) {
-                            //// determine availability of upload functionality based
-                            //// on a 405 for GET
-                            //getStatus(url + "/upload", function(status) {
-                                //button.setVisible(status === 405);
-                            //}, this);
-                        //}
-                    //}
-                //},
-                //scope: this
-            //});
-        }
-        return button;
     },
 
     //ADDED from 354723574e
