@@ -195,6 +195,30 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      *  Text for upload button (only renders if ``upload`` is provided).
      */
     uploadText: "Upload Data",
+	
+	/** api: config[saveSucceedText]
+     *  ``String``
+     *  Text for success message.
+     */
+	saveSucceedText: "Save succeed",
+	
+	/** api: config[saveFailedText]
+     *  ``String``
+     *  Text for fail message
+     */
+	saveFailedText: "Save failed",
+	
+	/** api: config[doubledRecordText]
+     *  ``String``
+     *  Text for fail message
+     */
+	doubledRecordText: "Such animation already exists",
+	
+	/** api: config[saveText]
+     *  ``String``
+     *  Text for save message header
+     */
+	saveText: "Save",
 
     /** api: config[nonUploadSources]
      *  ``Array``
@@ -224,6 +248,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
     selectedSource: null,
 
 	/** private: property[windowsWidth]  
+	 * ``Integer``
      */
     windowsWidth: 900,
 	
@@ -271,7 +296,6 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             this.initCapGrid();
         }
         this.capGrid.show();
-		animationStore.load();
     },
 
     /**
@@ -476,33 +500,65 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 			store.remove(record);
 			store.insert(index, record);
 		}
+				
+		sendData = function (record, scope) {	// commit 
+			OpenLayers.Request.issue({
+				method: "GET",
+				url: "save",
+				async: true,
+				params:{
+					service : "animation",
+					action  : "add",
+					title    : record.title,
+					url   : record.url,
+					x_axis    : record.x_axis,
+					layers     : record.layers,
+					owner   : record.owner
+				},
+				callback: function(request) 
+				{					
+					handleClose.call(scope||this, request.status, scope);
+				}					
+			});
+		};
 		
-		var animationStore = new Ext.data.JsonStore({ // use json store
-			url       : 'animation.json',
-			root      : 'layers',
-			fields    : [ {name: 'name', mapping: 'owner'}, 'url', 'title', 'x_axis', 'layers'],
-			writer: new Ext.data.JsonWriter({
-						encode: false 
-					})
-		});
+		handleClose = function (code) {
+			if (code===200) {
+				this.capGrid.hide();
+				animationLayersPanel.getStore().removeAll(true);
+				animationLayersPanel.getView().refresh();
+				animationName.setValue("");
+				Ext.Msg.alert(this.saveText, this.saveSucceedText);
+			}
+			else if (code==409) {
+				Ext.Msg.alert(this.saveText, this.doubledRecordText);
+			}
+			else if (code==200) {
+				Ext.Msg.alert(this.saveText, this.saveFailedText);
+			}
+		};
 		
-		AnimationRecord = Ext.data.Record.create([  // define animation.json record
-			{name: "owner", type: "string"},
-			{name: "url", type: "string"},
-			{name: "title", type: "string"},
-			{name: "x_axis", type: "array"},
-			{name: "layers", type: "array"}
-		]);
+		// param b: boolean
+		checkFields = function (b, sc) {
+			var res = true;
+			if (animationName.getValue()!="") {
+				if (animationLayersPanel.getStore().getCount()>0) {
+					if (!b) { Ext.Msg.alert(this.errorTitleText, this.xaxisRequiredErrorText); res = false;}
+				}
+				else {
+					Ext.Msg.alert(this.errorTitleText, this.layersRequiredErrorText);
+					res = false;
+				}
+			}
+			else {
+				Ext.Msg.alert(this.errorTitleText, this.nameRequiredErrorText);
+				res = false;
+			}
+			return res;
+		};
 		
-		function addRecordToStore(store, record) {	// commit to store
-			store.add(record);
-			store.commitChanges();
-		}
-		
-		function saveAnimation() {	// save animation method
+		 getLayers = function(layersArr, axisArr){
 			var store = animationLayersPanel.getStore();	
-			var axisArr = new Array();
-			var layersArr = new Array();
 			var valid = true;	// is x_axis not null?
 			store.each(
 				function(record){  
@@ -514,22 +570,23 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 					layersArr.push(record.data.name);
 				}				
 			);
-			
-			if (!valid) {				
-				return false;
-			}
-				
+			return valid;
+		};
+		
+		saveAnimation = function(scope) {	// save animation method
+			var layersArr = new Array();
+			var axisArr = new Array();
+			if (!checkFields.call(scope||this, getLayers(layersArr, axisArr), scope)) return;
 			// prepare record
-			var record = new AnimationRecord({
+			var record = {
 				owner: "Администратор",
 				url: "http://oceanviewer.ru/resources/"+sourceComboBox.getValue()+"/wms?service=WMS&request=GetMap",
 				title: animationName.getValue(),	
 				x_axis: axisArr,
 				layers: layersArr
-			});
-			addRecordToStore(animationStore, record);	//	defined above
-			return true;
-		}		
+			}
+			sendData(record, scope);	
+		};
 		
         var sourceComboBox = new Ext.form.ComboBox({
             store: sources,
@@ -833,24 +890,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
                 text: this.doneText,
 				iconCls: "save",
                 handler: function() {
-					if (animationName.getValue()!="") {
-						if (animationLayersPanel.getStore().getCount()>0) {
-							if (saveAnimation()) { 
-								this.capGrid.hide();
-								animationLayersPanel.getStore().removeAll(true);
-								animationLayersPanel.getView().refresh();
-								animationName.setValue("");
-							}
-							else 
-								Ext.Msg.alert(this.errorTitleText, this.xaxisRequiredErrorText);
-						}
-						else {
-							Ext.Msg.alert(this.errorTitleText, this.layersRequiredErrorText);
-						}
-					}
-					else {
-							Ext.Msg.alert(this.errorTitleText, this.nameRequiredErrorText);
-					}
+					saveAnimation(this);					
                 },
                 scope: this
             })
