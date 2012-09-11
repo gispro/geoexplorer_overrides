@@ -257,7 +257,8 @@
 
                           for(var m=0; m<outputFormatNode.childNodes.length; m++){
                             menuItems.push( { 
-                              text: outputFormatNode.childNodes[m].textContent, v: outputFormatNode.childNodes[m].textContent,
+                              //text: outputFormatNode.childNodes[m].textContent, v: outputFormatNode.childNodes[m].textContent,
+							  text: outputFormatNode.childNodes[m].textContent, v: outputFormatNode.childNodes[m].textContent,
                               handler: this.downloadFormatsMenuItemHandler,
                               scope: this
                             } )
