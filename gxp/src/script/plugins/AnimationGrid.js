@@ -346,7 +346,7 @@ gxp.plugins.AnimationGrid = Ext.extend(gxp.plugins.Tool, {
                 } else {
                     layerStore.add([record]);
                 }
-            }
+            } 
         }
         if (extent) {
             this.target.mapPanel.map.zoomToExtent(extent);
