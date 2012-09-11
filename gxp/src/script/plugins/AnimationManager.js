@@ -116,6 +116,18 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      */
 	xaxisRequiredErrorText: "Please enter x-axis labels",
 	
+	/** api: config[aimationInvalidErrorText]
+     *  ``String``
+     *  Text for an error message when there are no names for x-axis labels
+     */
+	aimationInvalidErrorText: "Can't open the animation. It doesn't consist of WMS-layers of has been corrupted",
+	
+	/** api: config[errorText]
+     *  ``String``
+     *  Text for an error message when there are no names for x-axis labels
+     */
+	errorText: "Error",
+	
     /** api: config[availableLayersText]
      *  ``String``
      *  Text for the available layers (i18n).
@@ -158,6 +170,30 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      */
     doneText: "Done",
 	
+	/** api: config[cancelText]
+     *  ``String``
+     *  Text for Done button (i18n).
+     */
+    cancelText: "Cancel",
+	
+	/** api: config[ascText]
+     *  ``String``
+     *  Text for asc header menu button (i18n).
+     */
+    ascText: "Sort ascenging",
+	
+	/** api: config[descText]
+     *  ``String``
+     *  Text for desc header menu button  (i18n).
+     */
+    descText: "Sort descending",
+	
+	/** api: config[colText]
+     *  ``String``
+     *  Text for column header menu button  (i18n).
+     */
+    colText: "Columns",
+	
 	/** api: config[windowTitle]
      *  ``String``
      *  Windows title (i18n).
@@ -177,6 +213,30 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      *  Text for upload button (only renders if ``upload`` is provided).
      */
     uploadText: "Upload Data",
+	
+	/** api: config[saveSucceedText]
+     *  ``String``
+     *  Text for success message.
+     */
+	saveSucceedText: "Save succeed",
+	
+	/** api: config[saveFailedText]
+     *  ``String``
+     *  Text for fail message
+     */
+	saveFailedText: "Save failed",
+	
+	/** api: config[doubledRecordText]
+     *  ``String``
+     *  Text for fail message
+     */
+	doubledRecordText: "Such animation already exists",
+	
+	/** api: config[saveText]
+     *  ``String``
+     *  Text for save message header
+     */
+	saveText: "Save",
 
     /** api: config[nonUploadSources]
      *  ``Array``
@@ -199,12 +259,28 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      */
     startSourceId: null,
     
-    /** private: property[selectedSource]
+	/** private: property[layerId]
+	*  Editing layers
+	*/
+    layerId: null,
+	
+	/** private: property[selectedSource]
      *  :class:`gxp.plugins.LayerSource`
      *  The currently selected layer source.
      */
     selectedSource: null,
 
+	/** private: property[windowsWidth]  
+	 * ``Integer``
+     */
+    windowsWidth: 900,
+	
+	/** private: property[updateCallback]  
+	 * invokes after saving the animation
+     */
+	updateCallback: null,
+	
+	
     /** private: method[constructor]
      */
     constructor: function(config) {
@@ -243,15 +319,39 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
     /** api: method[showAnimationWindow]
      * Shows the window with a capabilities grid.
      */
-    showAnimationWindow: function() {
-        if(!this.capGrid) {
+    showAnimationWindow: function(options) {
+        var valid = true;
+		if(!this.capGrid) {
             this.initCapGrid();
         }
-        this.capGrid.show();
-		animationStore.load();
+        if (options.layerId) {
+			valid = this.setFields(options.layerId, this);
+			this.layerId = options.layerId;
+		}
+		if (options.updateCallback) this.updateCallback = options.updateCallback;
+		if (valid) this.capGrid.show();		
     },
 
     /**
+     * private: method[setFields]
+     * Constructs a window with a capabilities grid.
+     */
+    setFields: function(layerId, scope) {
+		var valid = false;
+		if (layerId) {
+			var source = new gxp.plugins.AnimationSource();
+			var store = source.getLayersStore();
+			store.each(function(rec) {
+				if(rec.get("animId")==layerId){
+					Ext.getCmp("animationName").setValue(rec.get("title"));
+					valid = setSource(rec, scope);										
+				}
+			});
+		}
+		return valid;
+	},
+	
+	/**
      * private: method[initCapGrid]
      * Constructs a window with a capabilities grid.
      */
@@ -296,10 +396,13 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
         }
 
         var capGridPanel = new Ext.grid.GridPanel({
-            store: this.target.layerSources[data[idx][0]].store,
+            id: "capGridPanel",
+			store: this.target.layerSources[data[idx][0]].store,
             autoScroll: true,
 			title: this.availableLayersText,
+			width: this.windowsWidth/2,
             flex: 1,
+			region: "west",
             autoExpandColumn: "title",
             plugins: [expander],
             colModel: new Ext.grid.ColumnModel([
@@ -317,6 +420,8 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 								handler: function(grid, rowIndex, colIndex) {
 									var rec = grid.getStore().getAt(rowIndex);
 																	
+									var store = animationLayersPanel.getStore();
+									
 									animationRec = Ext.data.Record.create([
 										{name: "title", type: "string"},
 										{name: "name", type: "string"},
@@ -327,13 +432,13 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 									var record = new animationRec({
 										title: rec.get('title'),
 										name: rec.get('name'),
-										x_axis: "",
+										x_axis: store.getCount()+1,
 										server: sourceComboBox.getValue()
 									});									
 									
 									// not 'store.add(rec);' because of changing metadata
 									
-									var store = animationLayersPanel.getStore();
+									
 									store.add(record);
 									store.commitChanges();
 																		
@@ -342,12 +447,21 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 				}
             ]),
             listeners: {
-                scope: this
+                scope: this,				
+				afterrender: function() {
+					var menu = capGridPanel.getView().hmenu.items;				
+ 					for (var i in menu.items) {
+						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
+						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
+						else if (menu.items[i].itemId=="columns") menu.items[i].text = this.colText;
+					}
+				}
             }
         });
 		
 		var animationLayersPanel = new Ext.grid.EditorGridPanel({	// right gridpanel
-            store: {
+            id: "animationLayersPanel",
+			store: {
 				storeId: 'animationLayersStore',
 				fields: ['title', 'name', 'x_axis', 'server'],
 				reader: new Ext.data.JsonReader(
@@ -358,6 +472,8 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             autoScroll: true,
 			title: this.chosenLayersText,
             flex: 1,
+			width: this.windowsWidth/2,
+			region: 'center',
 			clicksToEdit:1,
             autoExpandColumn: "title",
             colModel: new Ext.grid.ColumnModel([
@@ -366,7 +482,6 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 				{header: this.panelLabelText, dataIndex: "x_axis", width: 120, sortable: true,	// user-editable text field to define x-axis label
 						editor: {
 						xtype:'textfield',
-						allowBlank:false
 					}
 				},
 				{
@@ -405,8 +520,17 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 				}
             ]),
             listeners: {
-                scope: this
-            }
+                scope: this,				
+				afterrender: function() {
+					var menu = animationLayersPanel.getView().hmenu.items;				
+ 					for (var i in menu.items) {
+						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
+						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
+						else if (menu.items[i].itemId=="columns") menu.items[i].text = this.colText;
+					}
+				}
+			}
+            
         });
 		
 		// read: "move record up in store? - true/false"
@@ -432,33 +556,67 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 			store.remove(record);
 			store.insert(index, record);
 		}
+				
+		sendData = function (record, scope) {	// commit 
+			OpenLayers.Request.issue({
+				method: "GET",
+				url: "save",
+				async: true,
+				params:{
+					service : "animation",
+					action  : scope.layerId ? "update" : "add",
+					title   : record.title,
+					animId  : record.animId,
+					url   	: record.url+"?service=WMS&request=GetMap",
+					x_axis  : record.x_axis,
+					layers  : record.layers,
+					owner   : record.owner
+				},
+				callback: function(request) 
+				{					
+					handleClose.call(scope||this, request.status, scope);
+				}					
+			});
+		};
 		
-		var animationStore = new Ext.data.JsonStore({ // use json store
-			url       : 'animation.json',
-			root      : 'layers',
-			fields    : [ {name: 'name', mapping: 'owner'}, 'url', 'title', 'x_axis', 'layers'],
-			writer: new Ext.data.JsonWriter({
-						encode: false 
-					})
-		});
+		handleClose = function (code) {
+			if (code===200) {
+				this.capGrid.hide();
+				animationLayersPanel.getStore().removeAll(true);
+				animationLayersPanel.getView().refresh();
+				animationName.setValue("");
+				Ext.Msg.alert(this.saveText, this.saveSucceedText);
+				if (this.updateCallback) this.updateCallback.call();
+			}
+			else if (code==409) {
+				Ext.Msg.alert(this.saveText, this.doubledRecordText);
+			}
+			else if (code==200) {
+				Ext.Msg.alert(this.saveText, this.saveFailedText);
+			}
+		};
 		
-		AnimationRecord = Ext.data.Record.create([  // define animation.json record
-			{name: "owner", type: "string"},
-			{name: "url", type: "string"},
-			{name: "title", type: "string"},
-			{name: "x_axis", type: "array"},
-			{name: "layers", type: "array"}
-		]);
+		// param b: boolean
+		checkFields = function (b, sc) {
+			var res = true;
+			if (animationName.getValue()!="") {
+				if (animationLayersPanel.getStore().getCount()>0) {
+					if (!b) { Ext.Msg.alert(this.errorTitleText, this.xaxisRequiredErrorText); res = false;}
+				}
+				else {
+					Ext.Msg.alert(this.errorTitleText, this.layersRequiredErrorText);
+					res = false;
+				}
+			}
+			else {
+				Ext.Msg.alert(this.errorTitleText, this.nameRequiredErrorText);
+				res = false;
+			}
+			return res;
+		};
 		
-		function addRecordToStore(store, record) {	// commit to store
-			store.add(record);
-			store.commitChanges();
-		}
-		
-		function saveAnimation() {	// save animation method
+		 getLayers = function(layersArr, axisArr){
 			var store = animationLayersPanel.getStore();	
-			var axisArr = new Array();
-			var layersArr = new Array();
 			var valid = true;	// is x_axis not null?
 			store.each(
 				function(record){  
@@ -470,25 +628,28 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 					layersArr.push(record.data.name);
 				}				
 			);
-			
-			if (!valid) {				
-				return false;
-			}
-				
+			return valid;
+		};
+		
+		saveAnimation = function(scope) {	// save animation method
+			var layersArr = new Array();
+			var axisArr = new Array();
+			if (!checkFields.call(scope||this, getLayers(layersArr, axisArr), scope)) return;
 			// prepare record
-			var record = new AnimationRecord({
+			var record = {
 				owner: "Администратор",
-				url: "http://oceanviewer.ru/resources/"+sourceComboBox.getValue()+"/wms?service=WMS&request=GetMap",
+				url: scope.target.layerSources[sourceComboBox.getValue()].url,
+				animId: scope.layerId ? scope.layerId : Date.now(),
 				title: animationName.getValue(),	
 				x_axis: axisArr,
 				layers: layersArr
-			});
-			addRecordToStore(animationStore, record);	//	defined above
-			return true;
-		}		
+			}
+			sendData(record, scope);	
+		};
 		
         var sourceComboBox = new Ext.form.ComboBox({
-            store: sources,
+            id: "sourceComboBox",
+			store: sources,
             valueField: "id",
             displayField: "title",
             triggerAction: "all",
@@ -605,9 +766,9 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
         
 		var animationName = new Ext.form.TextField({
 			fieldLabel: this.animationNameText,
+			id: 		'animationName',
 			name:       'animationName',
 			anchor:     '100%',
-			allowBlank:  false,
 			grow:        false
 		  });
 		
@@ -636,6 +797,77 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             }));
         }
         
+		setSource = function(rec, scope) {
+			var url = rec.get("url").split("?")[0]
+			var title, restUrl;
+			var found = false;
+			// try to find server
+			wmsStore.each(function(wmsRec) {
+				if (wmsRec.get("url") == url) { 
+					title = wmsRec.get("serverName");
+					restUrl = wmsRec.get("restUrl"); 	
+					found = true;
+				}
+			});
+			
+			if (!found) {				
+				Ext.Msg.alert(scope.errorText, scope.aimationInvalidErrorText);
+				return false;
+			}
+			
+			var conf = {url: url, restUrl: restUrl};
+			if (title) {
+				conf.title = title;
+			}
+						
+			app.addLayerSource({                // !!!!!!! target !!!!!!!!
+				config: conf, // assumes default of gx_wmssource
+				callback: function(id) {
+					// add to combo and select
+					var record = new sources.recordType({
+						id: id,
+						title: app.layerSources[id].title || this.untitledText
+					});
+					sources.insert(0, [record]);
+					sourceComboBox.onSelect(record, 0);
+					populateSelectedLayers(rec, id);
+				},
+				scope: this
+			});
+				
+			return true;
+		}
+		
+		var populateSelectedLayers = function(rec, server) {
+			var animStore = Ext.getCmp("animationLayersPanel").getStore();
+			var layersStore = Ext.getCmp("capGridPanel").getStore();
+			
+			animationRec = Ext.data.Record.create([
+				{name: "title", type: "string"},
+				{name: "name", type: "string"},
+				{name: "x_axis", type: "string"},
+				{name: "server", type: "string"}
+			]);
+
+			rec.data.names = new Array();
+			
+			for (var i = 0; i < rec.data.layers.length; i++){
+				rec.data.names[i] = layersStore.data.get(parseInt(i)).data.title;
+			}
+			
+			animStore.removeAll();
+			for (var i = 0; i < rec.data.layers.length; i++) {
+				var record = new animationRec({
+					title: rec.data.names[i],
+					name: rec.data.layers[i],
+					x_axis: rec.data.x_axis[i],
+					server: server
+				});	
+				animStore.add(record);
+			}								
+			animStore.commitChanges();
+		}
+		
         var newSourceWindow = new gxp.NewSourceWindow({
             modal: true,
             listeners: {
@@ -763,11 +995,11 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 		
         var items = {
             xtype: "container",
-            region: "center",
-            layout: "hbox",
-            layoutConfig: {
-                align: 'stretch'
-            },
+            layout:'border',
+			region: 'center',
+			defaults: {
+				split: true,
+			},
             items: [capGridPanel, animationLayersPanel]
         };
         if (this.instructionsText) {
@@ -786,51 +1018,39 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
         var bbarItems = [
             "->",            
             new Ext.Button({
+                text: this.cancelText,
+				iconCls: "cancel",
+                handler: function() {
+					this.capGrid.hide();
+                },
+                scope: this
+            }),
+			new Ext.Button({
                 text: this.doneText,
 				iconCls: "save",
                 handler: function() {
-					if (animationName.getValue()!="") {
-						if (animationLayersPanel.getStore().getCount()>0) {
-							if (saveAnimation()) { 
-								this.capGrid.hide();
-								animationLayersPanel.getStore().removeAll(true);
-								animationLayersPanel.getView().refresh();
-								animationName.setValue("");
-							}
-							else 
-								Ext.Msg.alert(this.errorTitleText, this.xaxisRequiredErrorText);
-						}
-						else {
-							Ext.Msg.alert(this.errorTitleText, this.layersRequiredErrorText);
-						}
-					}
-					else {
-							Ext.Msg.alert(this.errorTitleText, this.nameRequiredErrorText);
-					}
+					saveAnimation(this);					
                 },
                 scope: this
             })
         ];
-        
-        var uploadButton = this.createUploadButton();
-        if (uploadButton) {
-            bbarItems.unshift(uploadButton);
-        }
-
+		
         //TODO use addOutput here instead of just applying outputConfig
         this.capGrid = new Ext.Window(Ext.apply({
             title: this.windowTitle,
             closeAction: "hide",
             layout: "border",
             height: 350,
-            width: 900,
+            width: this.windowsWidth,
             modal: true,
             items: items,
             tbar: capGridToolbar,
             bbar: bbarItems,
             listeners: {
-                hide: function(win) {
-                    capGridPanel.getSelectionModel().clearSelections();
+                hide: function(win) {                   
+					animationLayersPanel.getStore().removeAll();
+					Ext.getCmp("animationName").setValue("");
+					this.layerId = null;
                 },
                 show: function(win) {
                     this.setSelectedSource(this.target.layerSources[data[idx][0]]);
@@ -879,150 +1099,6 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
         scope: this
       } )
 
-    },
-
-    /** private: method[createUploadButton]
-     *  If this tool is provided an ``upload`` property, a button will be created
-     *  that launches a window with a :class:`gxp.LayerUploadPanel`.
-     */
-    createUploadButton: function() {
-        var button;
-        var uploadConfig = this.initialConfig.upload;
-        // the url will be set in the sourceselected sequence
-        var url=this.target.uploadUrl;
-        if (uploadConfig) {
-            if (typeof uploadConfig === "boolean") {
-                uploadConfig = {};
-            }
-            button = new Ext.Button({
-                xtype: "button",
-                text: this.uploadText,
-                iconCls: "gxp-icon-filebrowse",
-                //hidden: true,
-                handler: function() {
-                    var panel = new gxp.LayerUploadPanel(Ext.apply({
-                        url: url,
-                        width: 350,
-                        border: false,
-                        bodyStyle: "padding: 10px 10px 0 10px;",
-                        frame: true,
-                        labelWidth: 65,
-                        defaults: {
-                            anchor: "95%",
-                            allowBlank: false,
-                            msgTarget: "side"
-                        },
-                        listeners: {
-                            uploadcomplete: function(panel, detail) {
-                                var layers = detail["import"].tasks[0].items;
-                                var names = {}, resource, layer;
-                                for (var i=0, len=layers.length; i<len; ++i) {
-                                    resource = layers[i].resource;
-                                    layer = resource.featureType || resource.coverage;
-                                    names[layer.namespace.name + ":" + layer.name] = true;
-                                }
-
-                                this.selectOrAddSource(detail, function(){
-                                this.selectedSource.store.load({
-                                    callback: function(records, options, success) {
-                                        var gridPanel, sel;
-                                        if (this.capGrid && this.capGrid.isVisible()) {
-                                            gridPanel = this.capGrid.get(0).get(0);
-                                            sel = gridPanel.getSelectionModel();
-                                            sel.clearSelections();
-                                        }
-                                        // select newly added layers
-                                        var newRecords = [];
-                                        var last = 0;
-                                        this.selectedSource.store.each(function(record, index) {
-                                            if (record.get("name") in names) {
-                                                last = index;
-                                                newRecords.push(record);
-                                            }
-                                        });
-                                        //if (gridPanel) {
-                                            //// this needs to be deferred because the 
-                                            //// grid view has not refreshed yet
-                                            //window.setTimeout(function() {
-                                                //sel.selectRecords(newRecords);
-                                                //gridPanel.getView().focusRow(last);
-                                            //}, 100);
-                                        //} else {
-                                            this.AnimationManager(newRecords, undefined, true);
-                                        //}
-                                    },
-                                    scope: this
-                                });
-                                if (this.outputTarget) {
-                                    panel.hide();
-                                } else {
-                                    win.close();
-                                }
-
-                                });
-
-                            },
-                            scope: this
-                        }
-                    }, uploadConfig));
-                    
-                    var win = new Ext.Window({
-                        title: this.uploadText,
-                        modal: true,
-                        resizable: false,
-                        items: [panel]
-                    });
-                    win.show();
-                },
-                scope: this
-            });
-            
-            var urlCache = {};
-            function getStatus(url, callback, scope) {
-                if (url in urlCache) {
-                    // always call callback after returning
-                    window.setTimeout(function() {
-                        callback.call(scope, urlCache[url]);
-                    }, 0);
-                } else {
-                    Ext.Ajax.request({
-                        url: url,
-                        disableCaching: false,
-                        callback: function(options, success, response) {
-                            var status = response.status;
-                            urlCache[url] = status;
-                            callback.call(scope, status);
-                        }
-                    });
-                }
-            }
-            
-            //this.on({
-                //sourceselected: function(tool, source) {
-                    //button.hide();
-                    //var show = false;
-                    //if (this.isEligibleForUpload(source)) {
-                        //// only works with GeoServer
-                        //// if url is http://example.com/geoserver/ows, we
-                        //// want http://example.com/geoserver/rest.
-                        //var parts = source.url.split("/");
-                        //parts.pop();
-                        //parts.push("rest");
-                        //// this sets the url for the layer upload panel
-                        //url = parts.join("/");
-                        //if (this.target.isAuthorized()) {
-                            //// determine availability of upload functionality based
-                            //// on a 405 for GET
-                            //getStatus(url + "/upload", function(status) {
-                                //button.setVisible(status === 405);
-                            //}, this);
-                        //}
-                    //}
-                //},
-                //scope: this
-            //});
-        }
-        return button;
     },
 
     //ADDED from 354723574e

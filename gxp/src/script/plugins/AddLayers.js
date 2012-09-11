@@ -43,6 +43,24 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
      *  Text for an untitled layer (i18n).
      */
     untitledText: "Untitled",
+	
+	/** api: config[ascText]
+     *  ``String``
+     *  Text for asc header menu button (i18n).
+     */
+    ascText: "Sort ascenging",
+	
+	/** api: config[descText]
+     *  ``String``
+     *  Text for desc header menu button  (i18n).
+     */
+    descText: "Sort descending",
+	
+	/** api: config[colText]
+     *  ``String``
+     *  Text for column header menu button  (i18n).
+     */
+    colText: "Columns",
 
     /** api: config[addLayerSourceErrorText]
      *  ``String``
@@ -301,7 +319,15 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             ]),
             listeners: {
                 rowdblclick: addLayers,
-                scope: this
+                scope: this,				
+				afterrender: function() {
+					var menu = capGridPanel.getView().hmenu.items;				
+ 					for (var i in menu.items) {
+						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
+						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
+						else if (menu.items[i].itemId=="columns") menu.items[i].text = this.colText;
+					}
+				}
             }
         });
         
