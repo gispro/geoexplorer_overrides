@@ -170,15 +170,12 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      */
     doneText: "Done",
 	
-<<<<<<< HEAD
 	/** api: config[cancelText]
      *  ``String``
      *  Text for Done button (i18n).
      */
     cancelText: "Cancel",
 	
-=======
->>>>>>> 260d296e582bd5576f9c3f919204d3e749f72cf6
 	/** api: config[ascText]
      *  ``String``
      *  Text for asc header menu button (i18n).
@@ -278,14 +275,11 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      */
     windowsWidth: 900,
 	
-<<<<<<< HEAD
 	/** private: property[updateCallback]  
 	 * invokes after saving the animation
      */
 	updateCallback: null,
 	
-=======
->>>>>>> 260d296e582bd5576f9c3f919204d3e749f72cf6
 	
     /** private: method[constructor]
      */
@@ -330,16 +324,12 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 		if(!this.capGrid) {
             this.initCapGrid();
         }
-<<<<<<< HEAD
         if (options.layerId) {
 			valid = this.setFields(options.layerId, this);
 			this.layerId = options.layerId;
 		}
 		if (options.updateCallback) this.updateCallback = options.updateCallback;
 		if (valid) this.capGrid.show();		
-=======
-        this.capGrid.show();
->>>>>>> 260d296e582bd5576f9c3f919204d3e749f72cf6
     },
 
     /**
@@ -574,20 +564,12 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 				async: true,
 				params:{
 					service : "animation",
-<<<<<<< HEAD
 					action  : scope.layerId ? "update" : "add",
 					title   : record.title,
 					animId  : record.animId,
 					url   	: record.url+"?service=WMS&request=GetMap",
 					x_axis  : record.x_axis,
 					layers  : record.layers,
-=======
-					action  : "add",
-					title    : record.title,
-					url   : record.url,
-					x_axis    : record.x_axis,
-					layers     : record.layers,
->>>>>>> 260d296e582bd5576f9c3f919204d3e749f72cf6
 					owner   : record.owner
 				},
 				callback: function(request) 
@@ -604,10 +586,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 				animationLayersPanel.getView().refresh();
 				animationName.setValue("");
 				Ext.Msg.alert(this.saveText, this.saveSucceedText);
-<<<<<<< HEAD
 				if (this.updateCallback) this.updateCallback.call();
-=======
->>>>>>> 260d296e582bd5576f9c3f919204d3e749f72cf6
 			}
 			else if (code==409) {
 				Ext.Msg.alert(this.saveText, this.doubledRecordText);
@@ -1055,13 +1034,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
                 scope: this
             })
         ];
-<<<<<<< HEAD
 		
-=======
-        
-        
-
->>>>>>> 260d296e582bd5576f9c3f919204d3e749f72cf6
         //TODO use addOutput here instead of just applying outputConfig
         this.capGrid = new Ext.Window(Ext.apply({
             title: this.windowTitle,
@@ -1084,8 +1057,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
                 },
                 scope: this
             }
-        }, this.initialConfig.outputConfig));
-        
+        }, this.initialConfig.outputConfig));        
     },
     
     /** private: method[setSelectedSource]
