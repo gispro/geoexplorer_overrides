@@ -300,7 +300,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
     
     /** api: method[addActions]
      */
-    addActions: function() {
+    /*addActions: function() {
         var selectedLayer;
         var actions = gxp.plugins.AnimationManager.superclass.addActions.apply(this, [{
             tooltip : this.addActionTip,
@@ -314,7 +314,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
         
         this.target.on("ready", function() {actions[0].enable();});
         return actions;
-    },
+    },*/
         
     /** api: method[showAnimationWindow]
      * Shows the window with a capabilities grid.
