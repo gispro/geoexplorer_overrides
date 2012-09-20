@@ -6,8 +6,8 @@
  */
 gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
     
-    /** api: ptype = gxp_ChartManager */
-    ptype: "gxp_ChartManager",
+    /** api: ptype = gxp_chartManager */
+    ptype: "gxp_chartManager",
     	
 	/** api: config[saveText]
      *  ``String``
@@ -127,7 +127,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
     /** api: method[showChartWindow]
      * Shows the window with a chart grid.
      */
-    showChartManager: function() {
+    showChartWindow: function() {
         if(!this.chartGrid) {
             this.initChartGrid();
         }
@@ -223,7 +223,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 		};		
 		
 		var editChart = function (id) {
-			app.tools.gxp_chartManager_ctl.showChartWindow({layerId:id, updateCallback: refreshGrid});
+			app.tools.gxp_chartWin_ctl.showChartWindow({layerId:id, updateCallback: refreshGrid});
 		};		
 		
 		var refreshGrid = function() {
@@ -240,7 +240,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 					leaf : true,
 					listeners: {
 						click: function(n) {
-						  return app.tools.gxp_chartManager_ctl.showChartWindow({updateCallback: refreshGrid});
+						  return app.tools.gxp_chartWin_ctl.showChartWindow({updateCallback: refreshGrid});
 						  
 						}
 					}

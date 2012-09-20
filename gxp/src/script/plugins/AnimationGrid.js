@@ -305,6 +305,7 @@ gxp.plugins.AnimationGrid = Ext.extend(gxp.plugins.Tool, {
             width: this.windowsWidth,						
 			height: this.windowsHeight,
             modal: true,
+			maximizable  : true,
             items: items,
             tbar: animGridToolbar,
             bbar: bbarItems,
