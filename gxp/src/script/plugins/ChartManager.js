@@ -33,6 +33,12 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
      */
 	chartTitleText: "Title",
 	
+	/** api: config[chartTitleText]
+     *  ``String``
+     *  Text for column header
+     */
+	defaultUseText: "Default",
+	
 	/** api: config[ownerTitleText]
      *  ``String``
      *  Text for column header
@@ -117,6 +123,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
              *
              *  * tool - :class:`gxp.plugins.ChartManager` This tool.
              *  * source - :class:`gxp.plugins.LayerSource` The selected source.
+             *  * source - :class:`gxp.plugins.LayerSource` The selected source.
              */
             "sourceselected"
         );
@@ -140,18 +147,52 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
      */
     initChartGrid: function() {
         var source = new gxp.plugins.ChartSource();
-		var chartStore = source.getLayersStore();
+		var chartStore = source.getChartsStore();
 		
+
+		
+	
         var chartGridPanel = new Ext.grid.GridPanel({
             id: "chartGridPanel",
 			store: chartStore,
+			fields: ['name', 'url', 'isDefault'],
             autoScroll: true,
             flex: 1,
-			region: "west",
+			//region: "west",
             autoExpandColumn: "url",
+			startChartId: "",
+			editedChartId: "",
+			setDefault : function(rowIdx) { 
+				for(var index=0; index<chartStore.data.items.length; index++) 
+				{ 
+					if(chartStore.data.items[index].data.isDefault=="true") 
+						{							
+							chartStore.data.items[index].set('isDefault',"false");    
+						}
+				} 
+				chartStore.data.items[rowIdx].set('isDefault',"true"); 
+				Ext.getCmp("chartGridPanel").editedChartId = chartStore.data.items[rowIdx].get('chartId');
+			} ,
+			//fields    : [ {name: 'name', mapping: 'owner'}, 'chartId', 'url', 'x_axis', 'y_axis', 'isDefault'],
             colModel: new Ext.grid.ColumnModel([
-                {id: "title", header: this.chartTitleText, dataIndex: "title", sortable: true, width: 200},
+                {id: "name", header: this.chartTitleText, dataIndex: "name", sortable: true, width: 200},
 				{id: "url", header: "URL", dataIndex: "url", sortable: false},
+				{id: "isDefault", header: this.defaultUseText, dataIndex: "isDefault", sortable: false, width: 200,
+					constructor : function(config){ 
+						this.callParent(arguments); 
+						if (this.rowspan) { 
+							this.renderer = Ext.Function.bind(this.renderer, this); 
+						} 
+					}, 
+					fixed: true, 
+					hideable: false, 
+					menuDisabled: true, 
+					renderer: function(value, metaData, record, rowIdx, colIdx, store) { 
+						var checked = "";
+						if (record.data.isDefault=="true") {checked="checked=true"}
+						return '<input '+ checked + ' onchange=Ext.getCmp("chartGridPanel").setDefault('+rowIdx+') type=radio >';
+					} 
+				},				
 				{
 					// this action column allow to include chosen layer to chart
 					header: this.actionText,
@@ -179,6 +220,12 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
             listeners: {
                 scope: this,				
 				afterrender: function() {
+					chartStore.on('load', function () {
+						for (var index=0; index<chartStore.getCount(); index++){
+							if (chartStore.data.items[index].data.isDefault=="true")
+								Ext.getCmp("chartGridPanel").startChartId = chartStore.data.items[index].data.chartId;
+						}
+					});
 					var menu = chartGridPanel.getView().hmenu.items;				
  					for (var i in menu.items) {
 						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
@@ -189,6 +236,8 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
             }
         });
 
+
+		
 		var askForDelete = function (rec,scope) {
 			Ext.Msg.show({
 				title: scope.askForDeleteHeaderText,
@@ -211,7 +260,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 				url: "save",
 				async: true,
 				params:{
-					service : "chart",
+					service : "charts",
 					action  : "remove",
 					chartId  : chartId
 				},
@@ -223,7 +272,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 		};		
 		
 		var editChart = function (id) {
-			app.tools.gxp_chartWin_ctl.showChartWindow({layerId:id, updateCallback: refreshGrid});
+			app.tools.gxp_chartEditor_ctl.showChartWindow({chartId:id, updateCallback: refreshGrid});
 		};		
 		
 		var refreshGrid = function() {
@@ -240,7 +289,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 					leaf : true,
 					listeners: {
 						click: function(n) {
-						  return app.tools.gxp_chartWin_ctl.showChartWindow({updateCallback: refreshGrid});
+						  return app.tools.gxp_chartEditor_ctl.showChartWindow({updateCallback: refreshGrid});
 						  
 						}
 					}
@@ -251,7 +300,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
         var items = {
             xtype: "container",
             region: "center",
-            layout: "vbox",
+            layout: "fit",
             layoutConfig: {
                 align: 'stretch'
             },
@@ -265,17 +314,47 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
                 text: this.doneText,
 				iconCls: "save",
                 handler: function() {
+					var grid = Ext.getCmp("chartGridPanel");
+					if (grid.startChartId != grid.editedChartId) {
+						storeSetDefault(grid.startChartId, "false");
+						storeSetDefault(grid.editedChartId, "true");
+					}
 					this.chartGrid.hide();
                 },
                 scope: this
             })
         ];
              
+		var storeSetDefault = function (chartId, value) {
+				for (var index=0; index<chartStore.getCount(); index++) {
+					if(chartStore.data.items[index].data.chartId==chartId)
+						OpenLayers.Request.issue({
+							method: "GET",
+							url: "save",
+							async: true,
+							params:{
+								service : "charts",
+								action  : "update",
+								name   : chartStore.data.items[index].data.name,
+								chartId  : chartStore.data.items[index].data.chartId,
+								url   	: chartStore.data.items[index].data.url,
+								x_axis  : chartStore.data.items[index].data.x_axis,
+								y_axis  : chartStore.data.items[index].data.y_axis,
+								isDefault : value
+							},
+							callback: function(request) 
+							{					
+								//alert(request.status);
+							}					
+						});
+				}				
+		}
+			
         //TODO use addOutput here instead of just applying outputConfig
         this.chartGrid = new Ext.Window(Ext.apply({
             title: this.windowTitle,
             closeAction: "hide",
-            layout: "border",
+            layout: "fit",
             width: this.windowsWidth,						
 			height: this.windowsHeight,
             modal: true,

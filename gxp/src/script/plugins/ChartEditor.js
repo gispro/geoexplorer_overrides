@@ -1,13 +1,13 @@
 /** api: constructor
- *  .. class:: AnimationManager(config)
+ *  .. class:: ChartEditor(config)
  *
  *    Plugin for removing a selected layer from the map.
  *    TODO Make this plural - selected layers
  */
-gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
+gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
     
-    /** api: ptype = gxp_animationManager */
-    ptype: "gxp_animationManager",
+    /** api: ptype = gxp_ChartEditor */
+    ptype: "gxp_chartEditor",
     
     /** api: config[addActionMenuText]
      *  ``String``
@@ -80,11 +80,11 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      */
     addButtonText: "Add layers",
 	
-	/** api: config[animationNameText]
+	/** api: config[chartNameText]
      *  ``String``
-     *  Text for animation name label (i18n).
+     *  Text for chart name label (i18n).
      */
-	animationNameText: "Animation name:",
+	chartNameText: "Chart name",
     
     /** api: config[untitledText]
      *  ``String``
@@ -102,13 +102,25 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      *  ``String``
      *  Text for an error message when name wasn't entered (i18n).
      */
-	nameRequiredErrorText: "Please enter animaion's name",
+	nameRequiredErrorText: "Please enter chart name",
 	
-	/** api: config[addLayerSourceErrorText]
+	/** api: config[isDefaultText]
      *  ``String``
-     *  Text for an error message when there are no layers in animation.
+     *  Text for an error message when there are no layers in chart.
      */
-	layersRequiredErrorText: "Please include at least one layer to this animation",
+	isDefaultText: "Default",
+	
+	/** api: config[xAxisText]
+     *  ``String``
+     *  Text for an error message when there are no layers in chart.
+     */
+	xAxisText: "X Label",
+	
+	/** api: config[yAxisText]
+     *  ``String``
+     *  Text for an error message when there are no layers in chart.
+     */
+	yAxisText: "Y Label",
 	
 	/** api: config[addLayerSourceErrorText]
      *  ``String``
@@ -120,7 +132,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      *  ``String``
      *  Text for an error message when there are no names for x-axis labels
      */
-	aimationInvalidErrorText: "Can't open the animation. It doesn't consist of WMS-layers of has been corrupted",
+	aimationInvalidErrorText: "Can't open the chart. It doesn't consist of WMS-layers of has been corrupted",
 	
 	/** api: config[errorText]
      *  ``String``
@@ -148,7 +160,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 	
 	/** api: config[availableLayersText]
      *  ``String``
-     *  Text for the layer animation x-axis label (i18n).
+     *  Text for the layer chart x-axis label (i18n).
      */
     panelLabelText: "Label",	
 
@@ -156,7 +168,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      *  ``String``
      *  Text for the layer selection (i18n).
      */
-    layerSelectionText: "View available data from:",
+    selectSourceText: "Layers source",
     
     /** api: config[instructionsText]
      *  ``String``
@@ -198,7 +210,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      *  ``String``
      *  Windows title (i18n).
      */
-    windowTitle: "Animation wizard",
+    windowTitle: "Chart editor",
 
     /** api: config[upload]
      *  ``Object | Boolean``
@@ -230,7 +242,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      *  ``String``
      *  Text for fail message
      */
-	doubledRecordText: "Such animation already exists",
+	doubledRecordText: "Such chart already exists",
 	
 	/** api: config[saveText]
      *  ``String``
@@ -259,10 +271,10 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      */
     startSourceId: null,
     
-	/** private: property[layerId]
+	/** private: property[chartId]
 	*  Editing layers
 	*/
-    layerId: null,
+    chartId: null,
 	
 	/** private: property[selectedSource]
      *  :class:`gxp.plugins.LayerSource`
@@ -273,10 +285,10 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 	/** private: property[windowsWidth]  
 	 * ``Integer``
      */
-    windowsWidth: 900,
+    windowsWidth: 550,
 	
 	/** private: property[updateCallback]  
-	 * invokes after saving the animation
+	 * invokes after saving the chart
      */
 	updateCallback: null,
 	
@@ -290,42 +302,45 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
              *
              *  Listener arguments:
              *
-             *  * tool - :class:`gxp.plugins.AnimationManager` This tool.
+             *  * tool - :class:`gxp.plugins.ChartEditor` This tool.
              *  * source - :class:`gxp.plugins.LayerSource` The selected source.
              */
             "sourceselected"
         );
-        gxp.plugins.AnimationManager.superclass.constructor.apply(this, arguments);        
+        gxp.plugins.ChartEditor.superclass.constructor.apply(this, arguments);        
     },
-        
-    /** api: method[showAnimationWindow]
+    
+    /** api: method[showChartWindow]
      * Shows the window with a capabilities grid.
      */
-    showAnimationWindow: function(options) {
+    showChartWindow: function(options) {
         var valid = true;
-		if(!this.capGrid) {
-            this.initCapGrid();
+		if(!this.chartWin) {
+            this.initCharts();
         }
-        if (options.layerId) {
-			valid = this.setFields(options.layerId, this);
-			this.layerId = options.layerId;
+        if (options.chartId) {
+			valid = this.setFields(options.chartId, this);
+			this.chartId = options.chartId;
 		}
 		if (options.updateCallback) this.updateCallback = options.updateCallback;
-		if (valid) this.capGrid.show();		
+		if (valid) this.chartWin.show();		
     },
 
     /**
      * private: method[setFields]
      * Constructs a window with a capabilities grid.
      */
-    setFields: function(layerId, scope) {
+    setFields: function(chartId, scope) {
 		var valid = false;
-		if (layerId) {
-			var source = new gxp.plugins.AnimationSource();
-			var store = source.getLayersStore();
+		if (chartId) {
+			var source = new gxp.plugins.ChartSource();
+			var store = source.getChartsStore();
 			store.each(function(rec) {
-				if(rec.get("animId")==layerId){
-					Ext.getCmp("animationName").setValue(rec.get("title"));
+				if(rec.get("chartId")==chartId){
+					Ext.getCmp("chartName").setValue(rec.get("name"));
+					Ext.getCmp("xAxis").setValue(rec.get("x_axis"));
+					Ext.getCmp("yAxis").setValue(rec.get("y_axis"));
+					Ext.getCmp("isDefault").setValue(rec.get("isDefault"));
 					valid = setSource(rec, scope);										
 				}
 			});
@@ -334,15 +349,15 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 	},
 	
 	/**
-     * private: method[initCapGrid]
+     * private: method[initCharts]
      * Constructs a window with a capabilities grid.
      */
-    initCapGrid: function() {
+    initCharts: function() {
         var source, data = [];        
         for (var id in this.target.layerSources) {
             source = this.target.layerSources[id];
 			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            if (source.store && (id != 'rss') && (id != 'arcgis93') && ((id != 'animation')))
+            if (source.store && (id != 'rss') && (id != 'arcgis93') && ((id != 'chart')))
 			{
                 data.push([id, source.title || id]);
             }
@@ -350,7 +365,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		// RSS
 		data.push(['rss'      , 'RSS'     ]);
-		data.push(['animation', 'Анимация']);
+		data.push(['chart', 'Анимация']);
 		// ArcGIS
 		if (arcgisStore && arcgisStore.reader.jsonData.arcgis.servers.length > 0)
 		{
@@ -377,8 +392,8 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             }, this);
         }
 
-        var capGridPanel = new Ext.grid.GridPanel({
-            id: "capGridPanel",
+        var chartWinPanel = new Ext.grid.GridPanel({
+            id: "chartWinPanel",
 			store: this.target.layerSources[data[idx][0]].store,
             autoScroll: true,
 			title: this.availableLayersText,
@@ -396,7 +411,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
                 {id: "title", header: this.panelTitleText, dataIndex: "title", sortable: true},
                 {header: "Id", dataIndex: "name", width: 120, sortable: true},
 				{
-					// this action column allow to include chosen layer to animation
+					// this action column allow to include chosen layer to chart
 					header: this.actionText,
 					xtype:'actioncolumn',
 					width:80,
@@ -406,16 +421,16 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 								handler: function(grid, rowIndex, colIndex) {
 									var rec = grid.getStore().getAt(rowIndex);
 																	
-									var store = animationLayersPanel.getStore();
+									var store = chartLayersPanel.getStore();
 									
-									animationRec = Ext.data.Record.create([
+									chartRec = Ext.data.Record.create([
 										{name: "title", type: "string"},
 										{name: "name", type: "string"},
 										{name: "x_axis", type: "string"},
 										{name: "server", type: "string"}
 									]);
 
-									var record = new animationRec({
+									var record = new chartRec({
 										title: rec.get('title'),
 										name: rec.get('name'),
 										x_axis: store.getCount()+1,
@@ -435,7 +450,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             listeners: {
                 scope: this,				
 				afterrender: function() {
-					var menu = capGridPanel.getView().hmenu.items;				
+					var menu = chartWinPanel.getView().hmenu.items;				
  					for (var i in menu.items) {
 						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
 						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
@@ -445,13 +460,13 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             }
         });				
 
-		var animationLayersPanel = new Ext.grid.EditorGridPanel({	// right gridpanel
-            id: "animationLayersPanel",
+		var chartLayersPanel = new Ext.grid.EditorGridPanel({	// right gridpanel
+            id: "chartLayersPanel",
 			store: {
-				storeId: 'animationLayersStore',
+				storeId: 'chartLayersStore',
 				fields: ['title', 'name', 'x_axis', 'server'],
 				reader: new Ext.data.JsonReader(
-					{root:'animationLayers'},
+					{root:'chartLayers'},
 					['title', 'name', 'x_axis', 'server']	// server - current server name, used to filter layers by source
 				)
 			},
@@ -478,12 +493,12 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 					xtype:'actioncolumn',
 					width: 80,
 					items: [{
-								// exclude layer from animation
+								// exclude layer from chart
 								iconCls: "gxp-icon-exclude",
 								tooltip: this.excludeBtnText,
 								handler: function(grid, rowIndex, colIndex) {
 									var rec = grid.getStore().getAt(rowIndex);
-									var store = animationLayersPanel.getStore();
+									var store = chartLayersPanel.getStore();
 									store.remove(rec);
 								}
 							},
@@ -511,7 +526,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             listeners: {
                 scope: this,				
 				afterrender: function() {
-					var menu = animationLayersPanel.getView().hmenu.items;				
+					var menu = chartLayersPanel.getView().hmenu.items;				
  					for (var i in menu.items) {
 						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
 						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
@@ -552,14 +567,14 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 				url: "save",
 				async: true,
 				params:{
-					service : "animation",
-					action  : scope.layerId ? "update" : "add",
-					title   : record.title,
-					animId  : record.animId,
+					service : "charts",
+					action  : scope.chartId ? "update" : "add",
+					name   : record.name,
+					chartId  : record.chartId,
 					url   	: record.url+"?service=WMS&request=GetMap",
 					x_axis  : record.x_axis,
-					layers  : record.layers,
-					owner   : record.owner
+					y_axis  : record.y_axis,
+					isDefault : record.isDefault
 				},
 				callback: function(request) 
 				{					
@@ -571,10 +586,11 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 		handleClose = function (code) {
 			if (code===200) {
 				if (this.updateCallback) this.updateCallback.call();
-				this.capGrid.hide();
-				animationLayersPanel.getStore().removeAll(true);
-				animationLayersPanel.getView().refresh();
-				animationName.setValue("");
+				this.chartWin.hide();
+				chartName.setValue("");
+				xAxis.setValue("");
+				yAxis.setValue("");
+				isDefault.setValue(false);
 				Ext.Msg.alert(this.saveText, this.saveSucceedText);				
 			}
 			else if (code==409) {
@@ -586,52 +602,27 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 		};
 		
 		// param b: boolean
-		checkFields = function (b, sc) {
+		checkFields = function (sc) {
 			var res = true;
-			if (animationName.getValue()!="") {
-				if (animationLayersPanel.getStore().getCount()>0) {
-					if (!b) { Ext.Msg.alert(this.errorTitleText, this.xaxisRequiredErrorText); res = false;}
-				}
-				else {
-					Ext.Msg.alert(this.errorTitleText, this.layersRequiredErrorText);
-					res = false;
-				}
-			}
-			else {
+			if (chartName.getValue()=="") {
 				Ext.Msg.alert(this.errorTitleText, this.nameRequiredErrorText);
-				res = false;
+				res = false;	
 			}
 			return res;
 		};
 		
-		 getLayers = function(layersArr, axisArr){
-			var store = animationLayersPanel.getStore();	
-			var valid = true;	// is x_axis not null?
-			store.each(
-				function(record){  
-					if (record.data.x_axis!="") 
-						axisArr.push(record.data.x_axis);
-					else {					
-						valid = false;
-					}					
-					layersArr.push(record.data.name);
-				}				
-			);
-			return valid;
-		};
-		
-		saveAnimation = function(scope) {	// save animation method
-			var layersArr = new Array();
-			var axisArr = new Array();
-			if (!checkFields.call(scope||this, getLayers(layersArr, axisArr), scope)) return;
+		saveChart = function(scope) {	// save chart method
+			if (!checkFields.call(scope||this, scope)) return;
 			// prepare record
+			//[ 'name' 'chartId', 'url', 'x_axis', 'y_axis', 'isDefault'],
 			var record = {
-				owner: "Администратор",
+				name : Ext.getCmp("chartName").getValue(),
 				url: scope.target.layerSources[sourceComboBox.getValue()].url,
-				animId: scope.layerId ? scope.layerId : Date.now(),
-				title: animationName.getValue(),	
-				x_axis: axisArr,
-				layers: layersArr
+				chartId: scope.chartId ? scope.chartId : Date.now(),
+				title: chartName.getValue(),	
+				x_axis: Ext.getCmp("xAxis").getValue(),
+				y_axis: Ext.getCmp("yAxis").getValue(),
+				isDefault: Ext.getCmp("isDefault").getValue()
 			}
 			sendData(record, scope);	
 		};
@@ -639,14 +630,15 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
         var sourceComboBox = new Ext.form.ComboBox({
             id: "sourceComboBox",
 			store: sources,
-            valueField: "id",
+            fieldLabel: this.selectSourceText,
+			valueField: "id",
             displayField: "title",
             triggerAction: "all",
             editable: false,
             allowBlank: false,
             forceSelection: true,
             mode: "local",
-            width: 300,
+            width: 265,
             value: data[idx][0],
 			isServiceLoaded : function (title)
 			{
@@ -701,7 +693,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
                 select: function(combo, record, index)
 				{
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-					animationLayersPanel.getStore().filter("server",sourceComboBox.getValue());  // set selected layers filter					
+					chartLayersPanel.getStore().filter("server",sourceComboBox.getValue());  // set selected layers filter					
 					if (record.get("id") === 'rss')
 					{
 						var source = this.target.layerSources['rss'];
@@ -709,20 +701,20 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 							source = new gxp.plugins.RssSource();
 						if (source)
 						{
-							capGridPanel.reconfigure(source.getLayersStore(), capGridPanel.getColumnModel());
-							capGridPanel.getView().focusRow(0);
+							chartWinPanel.reconfigure(source.getLayersStore(), chartWinPanel.getColumnModel());
+							chartWinPanel.getView().focusRow(0);
 						}						
 					}
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-					else if (record.get("id") === 'animation')
+					else if (record.get("id") === 'chart')
 					{
-						var source = this.target.layerSources['animation'];
+						var source = this.target.layerSources['chart'];
 						if (!source)
-							source = new gxp.plugins.AnimationSource();
+							source = new gxp.plugins.ChartSource();
 						if (source)
 						{
-							capGridPanel.reconfigure(source.getLayersStore(), capGridPanel.getColumnModel());
-							capGridPanel.getView().focusRow(0);
+							chartWinPanel.reconfigure(source.getLayersStore(), chartWinPanel.getColumnModel());
+							chartWinPanel.getView().focusRow(0);
 						}						
 					}
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -734,18 +726,18 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 						if (source)
 						{
 							var url = source.getLayersURL(record.get("title"));
-							capGridPanel.reconfigure(source.getLayersStore(url), capGridPanel.getColumnModel());
-							capGridPanel.getView().focusRow(0);
+							chartWinPanel.reconfigure(source.getLayersStore(url), chartWinPanel.getColumnModel());
+							chartWinPanel.getView().focusRow(0);
 						}
 					}
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 					else
 					{
 						var source = this.target.layerSources[record.get("id")];
-						capGridPanel.reconfigure(source.store, capGridPanel.getColumnModel());
+						chartWinPanel.reconfigure(source.store, chartWinPanel.getColumnModel());
 						// TODO: remove the following when this Ext issue is addressed
 						// http://www.extjs.com/forum/showthread.php?100345-GridPanel-reconfigure-should-refocus-view-to-correct-scroller-height&p=471843
-						capGridPanel.getView().focusRow(0);
+						chartWinPanel.getView().focusRow(0);
 						this.setSelectedSource(source);
 					}
                 },
@@ -753,38 +745,9 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             }
         });
         
-		var animationName = new Ext.form.TextField({
-			fieldLabel: this.animationNameText,
-			id: 		'animationName',
-			name:       'animationName',
-			anchor:     '100%',
-			grow:        false
-		  });
-		
-        var capGridToolbar = null;
-        if (this.target.proxy || data.length > 1) {
-            capGridToolbar = [
-				new Ext.Toolbar.TextItem({
-                    text: this.animationNameText
-                }),
-				animationName,
-				new Ext.Toolbar.Separator(),
-                new Ext.Toolbar.TextItem({
-                    text: this.layerSelectionText
-                }),
-                sourceComboBox
-            ];
-        }
-        
-        if (this.target.proxy) {
-            capGridToolbar.push("-", new Ext.Button({
-                text: this.addServerText,
-                iconCls: "gxp-icon-addserver",
-                handler: function() {
-                    newSourceWindow.show();
-                }
-            }));
-        }
+
+	   
+
         
 		setSource = function(rec, scope) {
 			var url = rec.get("url").split("?")[0]
@@ -818,43 +781,12 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 						title: app.layerSources[id].title || this.untitledText
 					});
 					sources.insert(0, [record]);
-					sourceComboBox.onSelect(record, 0);
-					populateSelectedLayers(rec, id);
+					sourceComboBox.onSelect(record, 0);					
 				},
 				scope: this
 			});
 				
 			return true;
-		}
-		
-		var populateSelectedLayers = function(rec, server) {
-			var animStore = Ext.getCmp("animationLayersPanel").getStore();
-			var layersStore = Ext.getCmp("capGridPanel").getStore();
-			
-			animationRec = Ext.data.Record.create([
-				{name: "title", type: "string"},
-				{name: "name", type: "string"},
-				{name: "x_axis", type: "string"},
-				{name: "server", type: "string"}
-			]);
-
-			rec.data.names = new Array();
-			
-			for (var i = 0; i < rec.data.layers.length; i++){
-				rec.data.names[i] = layersStore.data.get(parseInt(i)).data.title;
-			}
-			
-			animStore.removeAll();
-			for (var i = 0; i < rec.data.layers.length; i++) {
-				var record = new animationRec({
-					title: rec.data.names[i],
-					name: rec.data.layers[i],
-					x_axis: rec.data.x_axis[i],
-					server: server
-				});	
-				animStore.add(record);
-			}								
-			animStore.commitChanges();
 		}
 		
         var newSourceWindow = new gxp.NewSourceWindow({
@@ -982,27 +914,14 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
         });
         
 		
-        
-        if (this.instructionsText) {
-            items.items.push({
-                xtype: "box",
-                autoHeight: true,
-                autoEl: {
-                    tag: "p",
-                    cls: "x-form-item",
-                    style: "padding-left: 5px; padding-right: 5px"
-                },
-                html: this.instructionsText
-            });
-        }
-        
+       
         var bbarItems = [
             "->",            
             new Ext.Button({
                 text: this.cancelText,
 				iconCls: "cancel",
                 handler: function() {
-					this.capGrid.hide();
+					this.chartWin.hide();
                 },
                 scope: this
             }),
@@ -1010,44 +929,96 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
                 text: this.doneText,
 				iconCls: "save",
                 handler: function() {
-					saveAnimation(this);					
+					saveChart(this);					
                 },
                 scope: this
             })
         ];
 
+				
+		var chartName = new Ext.form.TextField({
+			fieldLabel: this.chartNameText,
+			width:		400,
+			id: 		'chartName',
+			name:       'chartName',
+			grow:        false
+		  });		      
+		
+
+       var layersSource = new Ext.form.CompositeField({
+			fieldLabel: this.selectSourceText,			
+			items: [
+				sourceComboBox,
+				{
+					xtype: 'button',
+					iconCls: "gxp-icon-addserver",
+					text: this.addServerText,
+					width: 130,
+					handler: function() {
+						newSourceWindow.show();
+					},
+					visible: this.target.proxy!=null
+				}
+			]
+		});
+		
+		var xAxis = new Ext.form.TextField({
+			fieldLabel: this.xAxisText,
+			width:		400,
+			id: 		'xAxis',
+			name:       'xAxis',
+			grow:        false
+		});	
+		
+		var yAxis = new Ext.form.TextField({
+			fieldLabel: this.yAxisText,
+			width:		400,
+			id: 		'yAxis',
+			name:       'yAxis',
+			grow:        false
+		});			
+		
+		var isDefault = new Ext.form.Checkbox({
+			fieldLabel: this.isDefaultText,
+			id: 		'isDefault',
+			name:       'isDefault',
+			grow:        false
+		});	
+		
         //TODO use addOutput here instead of just applying outputConfig
-        this.capGrid = new Ext.Window(Ext.apply({
+        this.chartWin = new Ext.Window(Ext.apply({
             title: this.windowTitle,
-            layout: 'column',   
+            layout: 'fit',   			
+			bodyPadding: 5,
 			closeAction: "hide",
-            height: 350,
+            height: 250,
             width: this.windowsWidth,			
             modal: true,
 			split: true,
-			maximizable: true,
+			resizable: false,
             items: [
-				new Ext.Panel({
-					//autoScroll: true,
-					layout: 'fit',
-					items: [capGridPanel]
-				}),	
-				new Ext.Panel({
-					//autoScroll: true,
-					layout: 'fit',
-					items: [animationLayersPanel]
-				})
-			],
-            tbar: capGridToolbar,
+					new Ext.Panel({
+						plain: true,
+						border: 0,
+						bodyPadding: 5,
+						bodyStyle: 'padding: 5px;',
+						layout: 'form',
+						items: [ layersSource, chartName,  xAxis, yAxis, isDefault] 
+					})
+				],
+            //tbar: chartWinToolbar,
             bbar: bbarItems,
             defaults: {
 				columnWidth: 0.5
 			},
 			listeners: {
                 hide: function(win) {                   
-					animationLayersPanel.getStore().removeAll();
-					Ext.getCmp("animationName").setValue("");
-					this.layerId = null;
+//					chartLayersPanel.getStore().removeAll();
+					chartName.setValue("");
+					xAxis.setValue("");
+					yAxis.setValue("");
+					isDefault.setValue(false);
+					this.chartId = null;
 					this.updateCallback = null;
                 },
                 show: function(win) {
@@ -1099,12 +1070,12 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
     },
 
     //ADDED from 354723574e
-    /** private: method[AnimationManager]
+    /** private: method[ChartEditor]
      *  :arg records: ``Array`` the layer records to add
      *  :arg source: :class:`gxp.plugins.LayerSource` The source to add from
      *  :arg isUpload: ``Boolean`` Do the layers to add come from an upload?
      */
-    AnimationManager: function(records, source, isUpload) {
+    ChartEditor: function(records, source, isUpload) {
         source = source || this.selectedSource;
         var layerStore = this.target.mapPanel.layers,
             extent, record, layer;
@@ -1171,4 +1142,4 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
     }
 	
 	});
-Ext.preg(gxp.plugins.AnimationManager.prototype.ptype, gxp.plugins.AnimationManager);
+Ext.preg(gxp.plugins.ChartEditor.prototype.ptype, gxp.plugins.ChartEditor);
