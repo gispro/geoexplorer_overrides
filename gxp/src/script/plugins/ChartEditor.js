@@ -157,6 +157,11 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      *  Text for the layer title (i18n).
      */
     panelTitleText: "Title",
+
+	/** api: config[performFieldsText]
+     *  ``String``
+     */
+	performFieldsText: "Get fields",
 	
 	/** api: config[availableLayersText]
      *  ``String``
@@ -181,6 +186,11 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      *  Text for Done button (i18n).
      */
     doneText: "Done",
+	
+	/** api: config[queryLayerText]
+     *  ``String``
+     */
+	queryLayerText: "Query",
 	
 	/** api: config[cancelText]
      *  ``String``
@@ -285,7 +295,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 	/** private: property[windowsWidth]  
 	 * ``Integer``
      */
-    windowsWidth: 550,
+    windowsWidth: 850,
 	
 	/** private: property[updateCallback]  
 	 * invokes after saving the chart
@@ -396,55 +406,20 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             id: "chartWinPanel",
 			store: this.target.layerSources[data[idx][0]].store,
             autoScroll: true,
+			height: 400,
 			title: this.availableLayersText,
-			autoHeight: true,
 			split: true,
-			/*width:'50%',
-			height: '100%',
-            flex: 1,*/
-			//height: 0.8 * Ext.lib.Dom.getViewHeight(),
-			//region: "west",
             autoExpandColumn: "title",
             plugins: [expander],
             colModel: new Ext.grid.ColumnModel([
                 expander,
                 {id: "title", header: this.panelTitleText, dataIndex: "title", sortable: true},
-                {header: "Id", dataIndex: "name", width: 120, sortable: true},
+                {header: "Id", dataIndex: "query", width: 120, sortable: true},
 				{
-					// this action column allow to include chosen layer to chart
-					header: this.actionText,
-					xtype:'actioncolumn',
-					width:80,
-					items: [{
-								iconCls: "gxp-icon-include",	//	new class in all.css
-								tooltip: this.includeBtnText,
-								handler: function(grid, rowIndex, colIndex) {
-									var rec = grid.getStore().getAt(rowIndex);
-																	
-									var store = chartLayersPanel.getStore();
-									
-									chartRec = Ext.data.Record.create([
-										{name: "title", type: "string"},
-										{name: "name", type: "string"},
-										{name: "x_axis", type: "string"},
-										{name: "server", type: "string"}
-									]);
-
-									var record = new chartRec({
-										title: rec.get('title'),
-										name: rec.get('name'),
-										x_axis: store.getCount()+1,
-										server: sourceComboBox.getValue()
-									});									
-									
-									// not 'store.add(rec);' because of changing metadata
-									
-									
-									store.add(record);
-									store.commitChanges();
-																		
-								}
-							}]
+					header: this.queryLayerText,
+					dataIndex: 'query',
+					flex: 1,
+					xtype: 'checkcolumn',
 				}
             ]),
             listeners: {
@@ -460,107 +435,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             }
         });				
 
-		var chartLayersPanel = new Ext.grid.EditorGridPanel({	// right gridpanel
-            id: "chartLayersPanel",
-			store: {
-				storeId: 'chartLayersStore',
-				fields: ['title', 'name', 'x_axis', 'server'],
-				reader: new Ext.data.JsonReader(
-					{root:'chartLayers'},
-					['title', 'name', 'x_axis', 'server']	// server - current server name, used to filter layers by source
-				)
-			},
-            autoScroll: true,
-			title: this.chosenLayersText,
-            autoHeight: true,
-			split: true,
-			/*flex: 1,
-			width:'50%',*/
-			//height: 0.8 * Ext.lib.Dom.getViewHeight(),
-			//region: 'east',
-			clicksToEdit:1,
-            autoExpandColumn: "title",
-            colModel: new Ext.grid.ColumnModel([
-                {header: this.panelTitleText, dataIndex: "title", sortable: true, id: "title"},
-                {header: "Id", dataIndex: "name", width: 120, sortable: true},
-				{header: this.panelLabelText, dataIndex: "x_axis", width: 120, sortable: true,	// user-editable text field to define x-axis label
-						editor: {
-						xtype:'textfield',
-					}
-				},
-				{
-					header: this.actionText,
-					xtype:'actioncolumn',
-					width: 80,
-					items: [{
-								// exclude layer from chart
-								iconCls: "gxp-icon-exclude",
-								tooltip: this.excludeBtnText,
-								handler: function(grid, rowIndex, colIndex) {
-									var rec = grid.getStore().getAt(rowIndex);
-									var store = chartLayersPanel.getStore();
-									store.remove(rec);
-								}
-							},
-							{
-								// manage layers order
-								iconCls: "gxp-icon-moveup",
-								tooltip: this.moveUpBtnText,
-								handler: function(grid, rowIndex, colIndex) {
-									var record = grid.getStore().getAt(rowIndex);
-									moveRecord(record,grid.getStore(),true);
-								}
-							},
-							{
-								// manage layers order
-								iconCls: "gxp-icon-movedown",
-								tooltip: this.moveDownBtnText,
-								handler: function(grid, rowIndex, colIndex) {
-									var record = grid.getStore().getAt(rowIndex);
-									moveRecord(record,grid.getStore(),false);									
-								}
-							}
-							]
-				}
-            ]),
-            listeners: {
-                scope: this,				
-				afterrender: function() {
-					var menu = chartLayersPanel.getView().hmenu.items;				
- 					for (var i in menu.items) {
-						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
-						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
-						else if (menu.items[i].itemId=="columns") menu.items[i].text = this.colText;
-					}
-				}
-			}
-            
-        });
-		
-		// read: "move record up in store? - true/false"
-		function moveRecord(record, store, up) {
-			if (!record) {
-				return;
-			}
-			var index = store.indexOf(record);
-			if (up) {
-				index--;
-				if (index <0) {
-					return;
-				}									
-			}
-			else
-			{
-				index++;
-				if (index >= store.getCount()) {
-					return;
-				}									
-			}
-			// change records order
-			store.remove(record);
-			store.insert(index, record);
-		}
-				
+	
 		sendData = function (record, scope) {	// commit 
 			OpenLayers.Request.issue({
 				method: "GET",
@@ -693,7 +568,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
                 select: function(combo, record, index)
 				{
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-					chartLayersPanel.getStore().filter("server",sourceComboBox.getValue());  // set selected layers filter					
+					//chartLayersPanel.getStore().filter("server",sourceComboBox.getValue());  // set selected layers filter					
 					if (record.get("id") === 'rss')
 					{
 						var source = this.target.layerSources['rss'];
@@ -913,8 +788,117 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             }
         });
         
+		var setFieldsStores = function(layers) {
+			var responds = [];
+			var fieldsX = [];
+			var fieldsY = [];
+			var failRespondCount = 0;
+
+			Ext4.Array.each(layers, function(el,i){
+              params.QUERY_LAYERS = el.name
+              params.LAYERS = el.name
+
+              var r = OpenLayers.Request.POST({
+                  url: this.getInfoUrl,
+                  data: OpenLayers.Util.getParameterString(params),
+                  headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                  },
+                  callback: function(respond){
+                    if(respond.status == 200){
+                        responds.push(respond)
+                        if(responds.length == layers.length - failRespondCount){
+								parse(
+									Ext4.Array.sort(responds,function(a,b){
+											return a.requestId > b.requestId;
+										})
+									.map(function(em){return em.responseText}),
+									fieldsX,
+									fieldsY
+								)
+                            }
+                    }else{
+                        failRespondCount += 1
+                        if(responds.length == layers.length - failRespondCount){
+								parse(
+									Ext4.Array.sort(responds,function(a,b){
+											return a.requestId > b.requestId;
+										})
+									.map(function(em){return em.responseText}),
+									fieldsX,
+									fieldsY
+								)
+                            }
+                    }
+                  },
+                  scope: this,
+                  proxy: this.target.proxy
+              })
+              r.requestId = i;
+          },this)
 		
+		
+		}
        
+		var parse(responds,fieldsX,fieldsY) {
+			var data = []
+            ,allFields = []
+            ,fieldsXData = []
+            ,fieldsYData = []
+            ,fieldsAxisType = {}
+
+        fieldsXData.push({id:'name', name: this.nameTitleAlias})
+
+        var fieldsSetted = false
+        Ext4.Array.each(responds,function(respond,i){
+                var t = respond.split("--------------------------------------------\n")
+
+                //server can return anything...
+                if(t[1]){
+                  
+                  var h = { name: t[0].split("'")[1] };
+                  var tt = t[1].split("\n");
+                  for(var j = 0; j<tt.length; j+=1) {
+                      var params = tt[j].split(" = ");
+                      var value = null;
+                      var key = params[0].toUpperCase();
+                      if (/^\-*\d+\.\d+$/.test(params[1])) {
+                              value = parseFloat(params[1])
+
+                              if (!fieldsSetted){
+                                      fieldsY.push(key);
+                                      fieldsAxisType[key] = 'Numeric';
+                                  }
+                          }
+                      else if (/^\-*\d+$/.test(params[1])) {
+                              value = parseInt(params[1])
+                              if (!fieldsSetted){
+                                      fieldsY.push(key);
+                                      fieldsAxisType[key] = 'Numeric';
+                                  }
+                          }
+                      else if (/^\d+\-\d+\-\d+\-*\d\s\d+:\d+$/.test(params[1])) { 
+                              //value = Date.parseDate(params[1],"Y-m-d H:i") 
+                              value = params[1];
+                              if (!fieldsSetted){
+                                      fieldsX.push(key);
+                                      fieldsAxisType[key] = 'Category'; //TODO Time
+                                  }
+                          }
+                      if(value != null){
+                              h[key] = value;
+                          }
+
+                  }
+                  fieldsSetted = true;
+                  data.push(h);
+                }
+
+            })
+
+        allFields = Ext4.Array.union(fieldsX, fieldsY);
+		}
+	   
         var bbarItems = [
             "->",            
             new Ext.Button({
@@ -985,25 +969,62 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 			grow:        false
 		});	
 		
+		var topbar = null;
+        if (this.target.proxy || data.length > 1) {
+            topbar = [
+                new Ext.Toolbar.TextItem({
+                    text: this.layerSelectionText
+                }),
+                sourceComboBox
+            ];
+        }
+        
+        if (this.target.proxy) {
+            topbar.push("-", new Ext.Button({
+                text: this.addServerText,
+                iconCls: "gxp-icon-addserver",
+                handler: function() {
+                    setFieldsStores();
+                }
+            }));
+        }
+		
+		topbar.push("-", new Ext.Button({
+			text: this.performFieldsText,
+			handler: function() {
+				newSourceWindow.show();
+			}
+		}));
+			
         //TODO use addOutput here instead of just applying outputConfig
         this.chartWin = new Ext.Window(Ext.apply({
             title: this.windowTitle,
             layout: 'fit',   			
 			bodyPadding: 5,
 			closeAction: "hide",
-            height: 250,
+            height: 650,
             width: this.windowsWidth,			
+			resizable: true,
             modal: true,
 			split: true,
 			resizable: false,
+			tbar: topbar,
             items: [
 					new Ext.Panel({
 						plain: true,
 						border: 0,
 						bodyPadding: 5,
-						bodyStyle: 'padding: 5px;',
 						layout: 'form',
-						items: [ layersSource, chartName,  xAxis, yAxis, isDefault] 
+						bodyStyle: 'padding: 5px; border: 0px;',
+						items: [ 
+							new Ext.Panel({
+								plain: true,
+								border: 0,
+								bodyPadding: 5,
+								bodyStyle: 'padding: 5px; border: 0px;',								
+								items: [ chartWinPanel] 
+							})
+							, chartName, xAxis, yAxis, isDefault] 
 					})
 				],
             //tbar: chartWinToolbar,

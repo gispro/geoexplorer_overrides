@@ -112,6 +112,11 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
      */
 	noText: "No",
 	
+	/** private: property[serviceURLText]  
+	 * ``String``
+     */
+	serviceURLText: "Service URL",
+	
     /** private: method[constructor]
      */
     constructor: function(config) {
@@ -176,7 +181,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 			//fields    : [ {name: 'name', mapping: 'owner'}, 'chartId', 'url', 'x_axis', 'y_axis', 'isDefault'],
             colModel: new Ext.grid.ColumnModel([
                 {id: "name", header: this.chartTitleText, dataIndex: "name", sortable: true, width: 200},
-				{id: "url", header: "URL", dataIndex: "url", sortable: false},
+				{id: "url", header: this.serviceURLText, dataIndex: "url", sortable: false},
 				{id: "isDefault", header: this.defaultUseText, dataIndex: "isDefault", sortable: false, width: 200,
 					constructor : function(config){ 
 						this.callParent(arguments); 
@@ -357,6 +362,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
             layout: "fit",
             width: this.windowsWidth,						
 			height: this.windowsHeight,
+			maximizable: true,
             modal: true,
             items: items,
             tbar: chartGridToolbar,
