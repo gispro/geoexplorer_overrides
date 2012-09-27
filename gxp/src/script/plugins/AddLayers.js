@@ -621,11 +621,11 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                 handler: addLayers,
                 scope : this
             })
-        ];
-        
+        ];        		
+		
         var uploadButton = this.createUploadButton();
         if (uploadButton) {
-            bbarItems.unshift(uploadButton);
+            capGridToolbar.push("-", uploadButton);
         }
 
         //TODO use addOutput here instead of just applying outputConfig
@@ -633,8 +633,8 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             title: this.availableLayersText,
             closeAction: "hide",
             layout: "border",
-            height: 300,
-            width: 750,
+            height: 400,
+            width: 800,
             modal: true,
             items: items,
             tbar: capGridToolbar,
