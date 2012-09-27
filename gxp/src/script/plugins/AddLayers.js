@@ -620,13 +620,6 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                 iconCls: "gxp-icon-addlayers",
                 handler: addLayers,
                 scope : this
-            }),
-            new Ext.Button({
-                text: this.doneText,
-                handler: function() {
-                    this.capGrid.hide();
-                },
-                scope: this
             })
         ];
         
