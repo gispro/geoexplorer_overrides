@@ -334,6 +334,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
         var sourceComboBox = new Ext.form.ComboBox({
             store: sources,
             valueField: "id",
+			id: "sourceComboBox",
             displayField: "title",
             triggerAction: "all",
             editable: false,
@@ -650,6 +651,16 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             }
         }, this.initialConfig.outputConfig));
         
+		sourceComboBox.setValue('animation');
+		var idx=0;
+		for (var i=0; i<sourceComboBox.store.data.items.length; i++) {
+			if (sourceComboBox.store.data.items[i].data.id=='animation'){
+					idx = i;
+					break;
+				}
+		}		
+		sourceComboBox.fireEvent("select", sourceComboBox, sourceComboBox.store.data.items[idx]);
+		
     },
     
     /** private: method[setSelectedSource]
