@@ -708,6 +708,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             button = new Ext.Button({
                 xtype: "button",
                 text: this.uploadText,
+				id: "uploadDataButton",
                 iconCls: "gxp-icon-filebrowse",
                 //hidden: true,
                 handler: function() {
