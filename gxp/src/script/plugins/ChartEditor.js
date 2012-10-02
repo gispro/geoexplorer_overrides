@@ -414,7 +414,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             colModel: new Ext.grid.ColumnModel([
                 expander,
                 {id: "title", header: this.panelTitleText, dataIndex: "title", sortable: true},
-                {header: "Id", dataIndex: "query", width: 120, sortable: true},
+                {header: "Id", dataIndex: "id", width: 120, sortable: true},
 				{
 					header: this.queryLayerText,
 					dataIndex: 'query',
@@ -840,6 +840,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 		
 		}
        
+	   /*
 		var parse(responds,fieldsX,fieldsY) {
 			var data = []
             ,allFields = []
@@ -898,7 +899,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 
         allFields = Ext4.Array.union(fieldsX, fieldsY);
 		}
-	   
+	*/   
         var bbarItems = [
             "->",            
             new Ext.Button({
@@ -984,7 +985,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
                 text: this.addServerText,
                 iconCls: "gxp-icon-addserver",
                 handler: function() {
-                    setFieldsStores();
+                    newSourceWindow.show();
                 }
             }));
         }
@@ -992,7 +993,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 		topbar.push("-", new Ext.Button({
 			text: this.performFieldsText,
 			handler: function() {
-				newSourceWindow.show();
+				//setFieldsStores();newSourceWindow.show();
 			}
 		}));
 			
