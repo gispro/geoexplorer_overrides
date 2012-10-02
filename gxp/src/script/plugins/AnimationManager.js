@@ -382,13 +382,9 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 			store: this.target.layerSources[data[idx][0]].store,
             autoScroll: true,
 			title: this.availableLayersText,
-			autoHeight: true,
-			split: true,
-			/*width:'50%',
-			height: '100%',
-            flex: 1,*/
-			//height: 0.8 * Ext.lib.Dom.getViewHeight(),
-			//region: "west",
+			width: this.windowsWidth/2,
+            flex: 1,
+			region: "west",
             autoExpandColumn: "title",
             plugins: [expander],
             colModel: new Ext.grid.ColumnModel([
@@ -457,12 +453,9 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 			},
             autoScroll: true,
 			title: this.chosenLayersText,
-            autoHeight: true,
-			split: true,
-			/*flex: 1,
-			width:'50%',*/
-			//height: 0.8 * Ext.lib.Dom.getViewHeight(),
-			//region: 'east',
+			flex: 1,
+			width: this.windowsWidth/2,
+			region: 'center',
 			clicksToEdit:1,
             autoExpandColumn: "title",
             colModel: new Ext.grid.ColumnModel([
@@ -981,7 +974,15 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             }
         });
         
-		
+		var items = {
+            xtype: "container",
+            layout:'border',
+			region: 'center',
+			defaults: {
+				split: true,
+			},
+            items: [capGridPanel, animationLayersPanel]
+        };
         
         if (this.instructionsText) {
             items.items.push({
@@ -1019,25 +1020,14 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
         //TODO use addOutput here instead of just applying outputConfig
         this.capGrid = new Ext.Window(Ext.apply({
             title: this.windowTitle,
-            layout: 'column',   
+            layout: 'border',   
 			closeAction: "hide",
             height: 350,
             width: this.windowsWidth,			
             modal: true,
 			split: true,
 			maximizable: true,
-            items: [
-				new Ext.Panel({
-					//autoScroll: true,
-					layout: 'fit',
-					items: [capGridPanel]
-				}),	
-				new Ext.Panel({
-					//autoScroll: true,
-					layout: 'fit',
-					items: [animationLayersPanel]
-				})
-			],
+            items: items,
             tbar: capGridToolbar,
             bbar: bbarItems,
             defaults: {
