@@ -652,14 +652,13 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
         }, this.initialConfig.outputConfig));
         
 		sourceComboBox.setValue('animation');
-		var idx=0;
-		for (var i=0; i<sourceComboBox.store.data.items.length; i++) {
-			if (sourceComboBox.store.data.items[i].data.id=='animation'){
-					idx = i;
-					break;
-				}
-		}		
-		sourceComboBox.fireEvent("select", sourceComboBox, sourceComboBox.store.data.items[idx]);
+		var source = this.target.layerSources['animation'];
+		if (!source)
+			source = new gxp.plugins.AnimationSource();
+		if (source)
+		{
+			capGridPanel.reconfigure(source.getLayersStore(), capGridPanel.getColumnModel());
+		}	
 		
     },
     
