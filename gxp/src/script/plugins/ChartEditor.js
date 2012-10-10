@@ -6,7 +6,7 @@
  */
 gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
     
-    /** api: ptype = gxp_ChartEditor */
+    /** api: ptype = gxp_chartEditor */
     ptype: "gxp_chartEditor",
     
     /** api: config[addActionMenuText]
@@ -32,6 +32,9 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      *  Text for error alerts title(i18n).
      */
 	errorTitleText: "Error",
+	
+	XText: "X axis",
+	YText: "Y axis",
 	
 	/** api: config[excludeBtnText]
      *  ``String``
@@ -84,7 +87,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      *  ``String``
      *  Text for chart name label (i18n).
      */
-	chartNameText: "Chart name",
+	chartNameText: "Chart name:",
     
     /** api: config[untitledText]
      *  ``String``
@@ -102,25 +105,17 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      *  ``String``
      *  Text for an error message when name wasn't entered (i18n).
      */
-	nameRequiredErrorText: "Please enter chart name",
+	nameRequiredErrorText: "Please enter animaion's name",
+		
+	errorText: "Error",
 	
-	/** api: config[isDefaultText]
+	wrongAxisRequest: "Can not get metadata",
+	
+	/** api: config[addLayerSourceErrorText]
      *  ``String``
      *  Text for an error message when there are no layers in chart.
      */
-	isDefaultText: "Default",
-	
-	/** api: config[xAxisText]
-     *  ``String``
-     *  Text for an error message when there are no layers in chart.
-     */
-	xAxisText: "X Label",
-	
-	/** api: config[yAxisText]
-     *  ``String``
-     *  Text for an error message when there are no layers in chart.
-     */
-	yAxisText: "Y Label",
+	layersRequiredErrorText: "Please include at least one layer to this chart",
 	
 	/** api: config[addLayerSourceErrorText]
      *  ``String``
@@ -157,11 +152,6 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      *  Text for the layer title (i18n).
      */
     panelTitleText: "Title",
-
-	/** api: config[performFieldsText]
-     *  ``String``
-     */
-	performFieldsText: "Get fields",
 	
 	/** api: config[availableLayersText]
      *  ``String``
@@ -173,7 +163,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      *  ``String``
      *  Text for the layer selection (i18n).
      */
-    selectSourceText: "Layers source",
+    layerSelectionText: "View available data from:",
     
     /** api: config[instructionsText]
      *  ``String``
@@ -186,11 +176,6 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      *  Text for Done button (i18n).
      */
     doneText: "Done",
-	
-	/** api: config[queryLayerText]
-     *  ``String``
-     */
-	queryLayerText: "Query",
 	
 	/** api: config[cancelText]
      *  ``String``
@@ -220,7 +205,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      *  ``String``
      *  Windows title (i18n).
      */
-    windowTitle: "Chart editor",
+    windowTitle: "Chart wizard",
 
     /** api: config[upload]
      *  ``Object | Boolean``
@@ -295,7 +280,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 	/** private: property[windowsWidth]  
 	 * ``Integer``
      */
-    windowsWidth: 850,
+    windowsWidth: 1000,
 	
 	/** private: property[updateCallback]  
 	 * invokes after saving the chart
@@ -319,21 +304,26 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
         );
         gxp.plugins.ChartEditor.superclass.constructor.apply(this, arguments);        
     },
-    
+        
+		
+	rec : null,
     /** api: method[showChartWindow]
      * Shows the window with a capabilities grid.
      */
     showChartWindow: function(options) {
         var valid = true;
-		if(!this.chartWin) {
-            this.initCharts();
+		if(!this.capGrid) {
+            this.initCapGrid();
         }
         if (options.chartId) {
 			valid = this.setFields(options.chartId, this);
 			this.chartId = options.chartId;
 		}
 		if (options.updateCallback) this.updateCallback = options.updateCallback;
-		if (valid) this.chartWin.show();		
+		if (valid) {
+			this.capGrid.show();			
+			this.capGrid.refreshAxis(); 
+		}
     },
 
     /**
@@ -348,21 +338,19 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 			store.each(function(rec) {
 				if(rec.get("chartId")==chartId){
 					Ext.getCmp("chartName").setValue(rec.get("name"));
-					Ext.getCmp("xAxis").setValue(rec.get("x_axis"));
-					Ext.getCmp("yAxis").setValue(rec.get("y_axis"));
-					Ext.getCmp("isDefault").setValue(rec.get("isDefault"));
-					valid = setSource(rec, scope);										
+					valid = setSource(rec, scope);															
 				}
 			});
-		}
+			scope.rec = store.data.items[0].data;			
+		}		
 		return valid;
 	},
 	
 	/**
-     * private: method[initCharts]
+     * private: method[initCapGrid]
      * Constructs a window with a capabilities grid.
      */
-    initCharts: function() {
+    initCapGrid: function() {
         var source, data = [];        
         for (var id in this.target.layerSources) {
             source = this.target.layerSources[id];
@@ -392,6 +380,8 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             data: data
         });
 
+
+		
         var expander = this.createExpander();       
         var idx = 0;
         if (this.startSourceId !== null) {
@@ -402,30 +392,62 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             }, this);
         }
 
-        var chartWinPanel = new Ext.grid.GridPanel({
-            id: "chartWinPanel",
+        var capGridPanel = new Ext.grid.GridPanel({
+            id: "capGridPanel",
 			store: this.target.layerSources[data[idx][0]].store,
             autoScroll: true,
-			height: 400,
 			title: this.availableLayersText,
-			split: true,
+			width: this.windowsWidth/2,
+            flex: 1,			
+			region: "west",
             autoExpandColumn: "title",
             plugins: [expander],
             colModel: new Ext.grid.ColumnModel([
                 expander,
                 {id: "title", header: this.panelTitleText, dataIndex: "title", sortable: true},
-                {header: "Id", dataIndex: "id", width: 120, sortable: true},
+                {header: "Id", dataIndex: "name", width: 120, sortable: true},
 				{
-					header: this.queryLayerText,
-					dataIndex: 'query',
-					flex: 1,
-					xtype: 'checkcolumn',
+					// this action column allow to include chosen layer to chart
+					header: this.actionText,
+					xtype:'actioncolumn',
+					width:80,
+					items: [{
+								iconCls: "gxp-icon-include",	//	new class in all.css
+								tooltip: this.includeBtnText,
+								handler: function(grid, rowIndex, colIndex) {
+									var rec = grid.getStore().getAt(rowIndex);
+																	
+									var store = chartLayersPanel.getStore();
+									
+									chartRec = Ext.data.Record.create([
+										{name: "title", type: "string"},
+										{name: "name", type: "string"},
+										{name: "x_axis", type: "string"},
+										{name: "server", type: "string"}
+									]);
+
+									var record = new chartRec({
+										title: rec.get('title'),
+										name: rec.get('name'),
+										x_axis: store.getCount()+1,
+										server: sourceComboBox.getValue()
+									});									
+									
+									// not 'store.add(rec);' because of changing metadata
+									
+									
+									store.add(record);
+									store.commitChanges();
+												
+									if (Ext.getCmp("chartLayersPanel").getStore().getCount()==1) refreshFieldsStores();
+								}
+							}]
 				}
             ]),
             listeners: {
                 scope: this,				
 				afterrender: function() {
-					var menu = chartWinPanel.getView().hmenu.items;				
+					var menu = capGridPanel.getView().hmenu.items;				
  					for (var i in menu.items) {
 						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
 						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
@@ -433,9 +455,104 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 					}
 				}
             }
-        });				
-
-	
+        });					
+		
+		var chartLayersPanel = new Ext.grid.EditorGridPanel({	// right gridpanel
+            id: "chartLayersPanel",
+			store: {
+				storeId: 'chartLayersStore',
+				fields: ['title', 'name', 'server'],
+				reader: new Ext.data.JsonReader(
+					{root:'chartLayers'},
+					['title', 'name', 'server']	// server - current server name, used to filter layers by source
+				)
+			},
+            autoScroll: true,
+			title: this.chosenLayersText,
+			flex: 1,
+			width: this.windowsWidth/2,
+			region: 'center',
+			clicksToEdit:1,
+            autoExpandColumn: "title",
+            colModel: new Ext.grid.ColumnModel([
+                {header: this.panelTitleText, dataIndex: "title", sortable: true, id: "title"},
+                {header: "Id", dataIndex: "name", width: 120, sortable: true},				
+				{
+					header: this.actionText,
+					xtype:'actioncolumn',
+					width: 80,
+					items: [{
+								// exclude layer from chart
+								iconCls: "gxp-icon-exclude",
+								tooltip: this.excludeBtnText,
+								handler: function(grid, rowIndex, colIndex) {
+									var rec = grid.getStore().getAt(rowIndex);
+									var store = chartLayersPanel.getStore();
+									store.remove(rec);
+									if (rowIndex==0) refreshFieldsStores();
+								}
+							},
+							{
+								// manage layers order
+								iconCls: "gxp-icon-moveup",
+								tooltip: this.moveUpBtnText,
+								handler: function(grid, rowIndex, colIndex) {
+									var record = grid.getStore().getAt(rowIndex);
+									moveRecord(record,grid.getStore(),true);
+									if (rowIndex==1) refreshFieldsStores();
+								}
+							},
+							{
+								// manage layers order
+								iconCls: "gxp-icon-movedown",
+								tooltip: this.moveDownBtnText,
+								handler: function(grid, rowIndex, colIndex) {
+									var record = grid.getStore().getAt(rowIndex);
+									moveRecord(record,grid.getStore(),false);
+									if (rowIndex==0) refreshFieldsStores();
+								}
+							}
+							]
+				}
+            ]),
+            listeners: {
+                scope: this,				
+				afterrender: function() {
+					var menu = chartLayersPanel.getView().hmenu.items;				
+ 					for (var i in menu.items) {
+						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
+						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
+						else if (menu.items[i].itemId=="columns") menu.items[i].text = this.colText;
+					}
+				}
+			}
+            
+        });
+		
+		// read: "move record up in store? - true/false"
+		function moveRecord(record, store, up) {
+			if (!record) {
+				return;
+			}
+			var index = store.indexOf(record);
+			if (up) {
+				index--;
+				if (index <0) {
+					return;
+				}									
+			}
+			else
+			{
+				index++;
+				if (index >= store.getCount()) {
+					return;
+				}									
+			}
+			// change records order
+			store.remove(record);
+			store.insert(index, record);
+		}
+				
 		sendData = function (record, scope) {	// commit 
 			OpenLayers.Request.issue({
 				method: "GET",
@@ -444,12 +561,12 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 				params:{
 					service : "charts",
 					action  : scope.chartId ? "update" : "add",
-					name   : record.name,
+					name    : record.name,
 					chartId  : record.chartId,
 					url   	: record.url+"?service=WMS&request=GetMap",
 					x_axis  : record.x_axis,
 					y_axis  : record.y_axis,
-					isDefault : record.isDefault
+					layers  : record.layers
 				},
 				callback: function(request) 
 				{					
@@ -461,11 +578,10 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 		handleClose = function (code) {
 			if (code===200) {
 				if (this.updateCallback) this.updateCallback.call();
-				this.chartWin.hide();
+				this.capGrid.hide();
+				chartLayersPanel.getStore().removeAll(true);
+				chartLayersPanel.getView().refresh();
 				chartName.setValue("");
-				xAxis.setValue("");
-				yAxis.setValue("");
-				isDefault.setValue(false);
 				Ext.Msg.alert(this.saveText, this.saveSucceedText);				
 			}
 			else if (code==409) {
@@ -477,27 +593,46 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 		};
 		
 		// param b: boolean
-		checkFields = function (sc) {
+		checkFields = function (b, sc) {
 			var res = true;
-			if (chartName.getValue()=="") {
+			if (chartName.getValue()!="") {
+				if (chartLayersPanel.getStore().getCount()>0) {
+					if (!b) { Ext.Msg.alert(this.errorTitleText, this.xaxisRequiredErrorText); res = false;}
+				}
+				else {
+					Ext.Msg.alert(this.errorTitleText, this.layersRequiredErrorText);
+					res = false;
+				}
+			}
+			else {
 				Ext.Msg.alert(this.errorTitleText, this.nameRequiredErrorText);
-				res = false;	
+				res = false;
 			}
 			return res;
 		};
 		
+		 getLayers = function(layersArr){
+			var store = chartLayersPanel.getStore();	
+			var valid = true;	// is x_axis not null?
+			store.each(
+				function(record){  
+					layersArr.push(record.data.name);
+				}				
+			);
+			return valid;
+		};
+		
 		saveChart = function(scope) {	// save chart method
-			if (!checkFields.call(scope||this, scope)) return;
+			var layersArr = new Array();
+			if (!checkFields.call(scope||this, getLayers(layersArr), scope)) return;
 			// prepare record
-			//[ 'name' 'chartId', 'url', 'x_axis', 'y_axis', 'isDefault'],
 			var record = {
-				name : Ext.getCmp("chartName").getValue(),
 				url: scope.target.layerSources[sourceComboBox.getValue()].url,
 				chartId: scope.chartId ? scope.chartId : Date.now(),
-				title: chartName.getValue(),	
-				x_axis: Ext.getCmp("xAxis").getValue(),
-				y_axis: Ext.getCmp("yAxis").getValue(),
-				isDefault: Ext.getCmp("isDefault").getValue()
+				name: chartName.getValue(),	
+				x_axis: fieldXvar.getValue(),
+				y_axis: fieldYvar.getValue(),
+				layers: layersArr
 			}
 			sendData(record, scope);	
 		};
@@ -505,15 +640,14 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
         var sourceComboBox = new Ext.form.ComboBox({
             id: "sourceComboBox",
 			store: sources,
-            fieldLabel: this.selectSourceText,
-			valueField: "id",
+            valueField: "id",
             displayField: "title",
             triggerAction: "all",
             editable: false,
             allowBlank: false,
             forceSelection: true,
             mode: "local",
-            width: 265,
+            width: 200,
             value: data[idx][0],
 			isServiceLoaded : function (title)
 			{
@@ -567,8 +701,19 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             listeners: {
                 select: function(combo, record, index)
 				{
+					
+					if (app.layerSources[sourceComboBox.getValue()]) {
+						
+						capGridPanel.enable();
+						chartLayersPanel.enable();
+					}
+					else {
+						Ext.Msg.alert("Ошибка", "Невозможно получить информацию от данного источника");
+						capGridPanel.disable();
+						chartLayersPanel.disable();
+					}	
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-					//chartLayersPanel.getStore().filter("server",sourceComboBox.getValue());  // set selected layers filter					
+					chartLayersPanel.getStore().filter("server",sourceComboBox.getValue());  // set selected layers filter					
 					if (record.get("id") === 'rss')
 					{
 						var source = this.target.layerSources['rss'];
@@ -576,8 +721,8 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 							source = new gxp.plugins.RssSource();
 						if (source)
 						{
-							chartWinPanel.reconfigure(source.getLayersStore(), chartWinPanel.getColumnModel());
-							chartWinPanel.getView().focusRow(0);
+							capGridPanel.reconfigure(source.getLayersStore(), capGridPanel.getColumnModel());
+							capGridPanel.getView().focusRow(0);
 						}						
 					}
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -588,8 +733,8 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 							source = new gxp.plugins.ChartSource();
 						if (source)
 						{
-							chartWinPanel.reconfigure(source.getLayersStore(), chartWinPanel.getColumnModel());
-							chartWinPanel.getView().focusRow(0);
+							capGridPanel.reconfigure(source.getLayersStore(), capGridPanel.getColumnModel());
+							capGridPanel.getView().focusRow(0);
 						}						
 					}
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -601,28 +746,153 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 						if (source)
 						{
 							var url = source.getLayersURL(record.get("title"));
-							chartWinPanel.reconfigure(source.getLayersStore(url), chartWinPanel.getColumnModel());
-							chartWinPanel.getView().focusRow(0);
+							capGridPanel.reconfigure(source.getLayersStore(url), capGridPanel.getColumnModel());
+							capGridPanel.getView().focusRow(0);
 						}
 					}
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 					else
 					{
 						var source = this.target.layerSources[record.get("id")];
-						chartWinPanel.reconfigure(source.store, chartWinPanel.getColumnModel());
+						capGridPanel.reconfigure(source.store, capGridPanel.getColumnModel());
 						// TODO: remove the following when this Ext issue is addressed
 						// http://www.extjs.com/forum/showthread.php?100345-GridPanel-reconfigure-should-refocus-view-to-correct-scroller-height&p=471843
-						chartWinPanel.getView().focusRow(0);
+						capGridPanel.getView().focusRow(0);
 						this.setSelectedSource(source);
 					}
+					
                 },
                 scope: this
             }
         });
         
+		var chartName = new Ext.form.TextField({
+			fieldLabel: this.chartNameText,
+			id: 		'chartName',
+			name:       'chartName',
+			anchor:     '100%',
+			grow:        false
+		  });
+		  
 
-	   
-
+		var fieldXvar = new Ext.form.ComboBox({
+            id: "fieldX",
+			store: Ext4.create('Ext.data.Store', {
+				fields: [{name: 'id', type: 'string'},{name: 'name',  type: 'string'}]
+			}),
+			mode: 'local',
+			editable: false,
+            valueField: "id",
+            displayField: "name",
+			triggerAction: 'all',
+            width: 100
+		});
+		
+		var fieldYvar = new Ext.form.ComboBox({
+            id: "fieldY",
+			store: Ext4.create('Ext.data.Store', {
+				fields: [{name: 'id', type: 'string'},{name: 'name',  type: 'string'}]
+			}),
+			mode: 'local',
+			editable: false,
+            valueField: "id",
+            displayField: "name",
+			triggerAction: 'all',
+            width: 100
+		});
+		
+		var refreshFieldsStores = function() {
+			layer = app.layerSources[sourceComboBox.getValue()].url.split("resources/")[1].split("/wms")[0] + ":" + Ext.getCmp("chartLayersPanel").getStore().data.items[0].data.name;
+			
+			var params = {
+				BBOX: "-30545459.490957,-11016716.011152,30545459.490957,11016716.011152"
+				,FEATURE_COUNT: 1
+				,HEIGHT: 563
+				,INFO_FORMAT: "text/plain"				
+				,REQUEST: "GetFeatureInfo"
+				,SERVICE: "WMS"
+				,VERSION: "1.1.1"
+				,WIDTH: 1561
+				,X: 919
+				,Y: 299
+				,srs: "EPSG:900913"	
+				,QUERY_LAYERS : layer
+				,LAYERS : layer
+			}
+			
+			var xFields, yFields;
+			var parser = new GeoExt.PrickerParser("translate");			
+			parser.doOnParce(setComboBoxes, this);
+			
+			var r = OpenLayers.Request.POST({
+			  url: app.layerSources[sourceComboBox.getValue()].url.split(layer.split(":")[0])[0]+"wms",
+			  data: OpenLayers.Util.getParameterString(params),
+			  headers: {
+				"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+			  },
+			  callback: function(respond){
+				if(respond.status == 200){
+					parser.parse([respond.responseText]);
+				}
+				else {
+					Ext.Msg.alert(this.errorText, this.wrongAxisRequest);
+				}
+			  }
+			});
+						
+		}
+		
+		new Ext.Button({
+			text: this.addServerText,
+			id: "refreshBtn",
+			hidden: true,
+			handler: function() {
+				refreshFieldsStores();
+			}
+		})
+		
+		var setComboBoxes = function(json) {
+			var fieldXStoreData = json.fieldsXData;
+			fieldXvar.store.loadData(fieldXStoreData);
+			this.fieldYStoreData = json.fieldsYData;
+			fieldYvar.store.loadData(fieldYStoreData);
+			Ext.getCmp("capGrid").refreshAxis();
+		}
+		
+        var capGridToolbar = null;
+        if (this.target.proxy || data.length > 1) {
+            capGridToolbar = [
+				new Ext.Toolbar.TextItem({
+					text: this.layerSelectionText
+				}),
+				sourceComboBox,			
+				new Ext.Button({
+					text: this.addServerText,
+					iconCls: "gxp-icon-addserver",
+					handler: function() {
+						newSourceWindow.show();
+					}
+				})
+            ];
+        }
+        
+        if (this.target.proxy) {
+            capGridToolbar.push( "->",[		
+				new Ext.Toolbar.TextItem({
+					text: this.chartNameText
+				}),
+				chartName,  
+				new Ext.Toolbar.TextItem({
+					text: this.XText
+				}),
+				fieldXvar,
+				new Ext.Toolbar.TextItem({
+					text: this.YText
+				}),
+				fieldYvar			
+			]);
+        }
+			
         
 		setSource = function(rec, scope) {
 			var url = rec.get("url").split("?")[0]
@@ -656,13 +926,53 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 						title: app.layerSources[id].title || this.untitledText
 					});
 					sources.insert(0, [record]);
-					sourceComboBox.onSelect(record, 0);					
+					sourceComboBox.onSelect(record, 0);
+					populateSelectedLayers(rec, id);
 				},
 				scope: this
 			});
 				
 			return true;
 		}
+		
+		var populateSelectedLayers = function(rec, server) {
+			var chartStore = Ext.getCmp("chartLayersPanel").getStore();
+			var layersStore = Ext.getCmp("capGridPanel").getStore();
+			
+			chartRec = Ext.data.Record.create([
+				{name: "title", type: "string"},
+				{name: "name", type: "string"},
+				{name: "x_axis", type: "string"},
+				{name: "server", type: "string"}
+			]);
+
+			rec.data.names = new Array();
+			
+			for (var i = 0; i < rec.data.layers.length; i++){
+				for (var j=0; j<layersStore.data.items.length; j++) {
+					if (layersStore.data.items[j].data.name==rec.data.layers[i])
+						rec.data.names[i] = layersStore.data.items[j].data.title;
+				}
+			}
+			
+			chartStore.removeAll();
+			for (var i = 0; i < rec.data.layers.length; i++) {
+				var record = new chartRec({
+					title: rec.data.names[i],
+					name: rec.data.layers[i],
+					x_axis: rec.data.x_axis[i],
+					server: server
+				});	
+				chartStore.add(record);
+			}								
+			chartStore.commitChanges();
+			
+			if (rec) {
+				Ext.getCmp("fieldX").setValue(rec.data.x_axis, 0);
+				Ext.getCmp("fieldY").setValue(rec.data.y_axis, 0);
+				refreshFieldsStores();														
+			}
+		}		
 		
         var newSourceWindow = new gxp.NewSourceWindow({
             modal: true,
@@ -788,125 +1098,36 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             }
         });
         
-		var setFieldsStores = function(layers) {
-			var responds = [];
-			var fieldsX = [];
-			var fieldsY = [];
-			var failRespondCount = 0;
-
-			Ext4.Array.each(layers, function(el,i){
-              params.QUERY_LAYERS = el.name
-              params.LAYERS = el.name
-
-              var r = OpenLayers.Request.POST({
-                  url: this.getInfoUrl,
-                  data: OpenLayers.Util.getParameterString(params),
-                  headers: {
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-                  },
-                  callback: function(respond){
-                    if(respond.status == 200){
-                        responds.push(respond)
-                        if(responds.length == layers.length - failRespondCount){
-								parse(
-									Ext4.Array.sort(responds,function(a,b){
-											return a.requestId > b.requestId;
-										})
-									.map(function(em){return em.responseText}),
-									fieldsX,
-									fieldsY
-								)
-                            }
-                    }else{
-                        failRespondCount += 1
-                        if(responds.length == layers.length - failRespondCount){
-								parse(
-									Ext4.Array.sort(responds,function(a,b){
-											return a.requestId > b.requestId;
-										})
-									.map(function(em){return em.responseText}),
-									fieldsX,
-									fieldsY
-								)
-                            }
-                    }
-                  },
-                  scope: this,
-                  proxy: this.target.proxy
-              })
-              r.requestId = i;
-          },this)
-		
-		
-		}
-       
-	   /*
-		var parse(responds,fieldsX,fieldsY) {
-			var data = []
-            ,allFields = []
-            ,fieldsXData = []
-            ,fieldsYData = []
-            ,fieldsAxisType = {}
-
-        fieldsXData.push({id:'name', name: this.nameTitleAlias})
-
-        var fieldsSetted = false
-        Ext4.Array.each(responds,function(respond,i){
-                var t = respond.split("--------------------------------------------\n")
-
-                //server can return anything...
-                if(t[1]){
-                  
-                  var h = { name: t[0].split("'")[1] };
-                  var tt = t[1].split("\n");
-                  for(var j = 0; j<tt.length; j+=1) {
-                      var params = tt[j].split(" = ");
-                      var value = null;
-                      var key = params[0].toUpperCase();
-                      if (/^\-*\d+\.\d+$/.test(params[1])) {
-                              value = parseFloat(params[1])
-
-                              if (!fieldsSetted){
-                                      fieldsY.push(key);
-                                      fieldsAxisType[key] = 'Numeric';
-                                  }
-                          }
-                      else if (/^\-*\d+$/.test(params[1])) {
-                              value = parseInt(params[1])
-                              if (!fieldsSetted){
-                                      fieldsY.push(key);
-                                      fieldsAxisType[key] = 'Numeric';
-                                  }
-                          }
-                      else if (/^\d+\-\d+\-\d+\-*\d\s\d+:\d+$/.test(params[1])) { 
-                              //value = Date.parseDate(params[1],"Y-m-d H:i") 
-                              value = params[1];
-                              if (!fieldsSetted){
-                                      fieldsX.push(key);
-                                      fieldsAxisType[key] = 'Category'; //TODO Time
-                                  }
-                          }
-                      if(value != null){
-                              h[key] = value;
-                          }
-
-                  }
-                  fieldsSetted = true;
-                  data.push(h);
-                }
-
-            })
-
-        allFields = Ext4.Array.union(fieldsX, fieldsY);
-		}
-	*/   
+		var items = {
+            xtype: "container",
+            layout:'border',
+			region: 'center',
+			defaults: {
+				split: true,
+			},
+            items: [capGridPanel, chartLayersPanel]
+        };
+        
+        if (this.instructionsText) {
+            items.items.push({
+                xtype: "box",
+                autoHeight: true,
+                autoEl: {
+                    tag: "p",
+                    cls: "x-form-item",
+                    style: "padding-left: 5px; padding-right: 5px"
+                },
+                html: this.instructionsText
+            });
+        }
+        
         var bbarItems = [
             "->",            
             new Ext.Button({
                 text: this.cancelText,
 				iconCls: "cancel",
                 handler: function() {
-					this.chartWin.hide();
+					this.capGrid.hide();
                 },
                 scope: this
             }),
@@ -920,126 +1141,35 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             })
         ];
 
-				
-		var chartName = new Ext.form.TextField({
-			fieldLabel: this.chartNameText,
-			width:		400,
-			id: 		'chartName',
-			name:       'chartName',
-			grow:        false
-		  });		      
-		
-
-       var layersSource = new Ext.form.CompositeField({
-			fieldLabel: this.selectSourceText,			
-			items: [
-				sourceComboBox,
-				{
-					xtype: 'button',
-					iconCls: "gxp-icon-addserver",
-					text: this.addServerText,
-					width: 130,
-					handler: function() {
-						newSourceWindow.show();
-					},
-					visible: this.target.proxy!=null
-				}
-			]
-		});
-		
-		var xAxis = new Ext.form.TextField({
-			fieldLabel: this.xAxisText,
-			width:		400,
-			id: 		'xAxis',
-			name:       'xAxis',
-			grow:        false
-		});	
-		
-		var yAxis = new Ext.form.TextField({
-			fieldLabel: this.yAxisText,
-			width:		400,
-			id: 		'yAxis',
-			name:       'yAxis',
-			grow:        false
-		});			
-		
-		var isDefault = new Ext.form.Checkbox({
-			fieldLabel: this.isDefaultText,
-			id: 		'isDefault',
-			name:       'isDefault',
-			grow:        false
-		});	
-		
-		var topbar = null;
-        if (this.target.proxy || data.length > 1) {
-            topbar = [
-                new Ext.Toolbar.TextItem({
-                    text: this.layerSelectionText
-                }),
-                sourceComboBox
-            ];
-        }
-        
-        if (this.target.proxy) {
-            topbar.push("-", new Ext.Button({
-                text: this.addServerText,
-                iconCls: "gxp-icon-addserver",
-                handler: function() {
-                    newSourceWindow.show();
-                }
-            }));
-        }
-		
-		topbar.push("-", new Ext.Button({
-			text: this.performFieldsText,
-			handler: function() {
-				//setFieldsStores();newSourceWindow.show();
-			}
-		}));
-			
         //TODO use addOutput here instead of just applying outputConfig
-        this.chartWin = new Ext.Window(Ext.apply({
+        this.capGrid = new Ext.Window(Ext.apply({
             title: this.windowTitle,
-            layout: 'fit',   			
-			bodyPadding: 5,
+            layout: 'border',   
 			closeAction: "hide",
-            height: 650,
+			id: 'capGrid',
+            height: 450,
             width: this.windowsWidth,			
-			resizable: true,
             modal: true,
 			split: true,
-			resizable: false,
-			tbar: topbar,
-            items: [
-					new Ext.Panel({
-						plain: true,
-						border: 0,
-						bodyPadding: 5,
-						layout: 'form',
-						bodyStyle: 'padding: 5px; border: 0px;',
-						items: [ 
-							new Ext.Panel({
-								plain: true,
-								border: 0,
-								bodyPadding: 5,
-								bodyStyle: 'padding: 5px; border: 0px;',								
-								items: [ chartWinPanel] 
-							})
-							, chartName, xAxis, yAxis, isDefault] 
-					})
-				],
-            //tbar: chartWinToolbar,
+			maximizable: true,
+            items: items,
+            tbar: capGridToolbar,
             bbar: bbarItems,
             defaults: {
 				columnWidth: 0.5
 			},
+			refreshAxis: function() {
+				if (Ext.getCmp("fieldX").value) Ext.getCmp("fieldX").setValue(Ext.getCmp("fieldX").value);
+				if (Ext.getCmp("fieldY").value) Ext.getCmp("fieldY").setValue(Ext.getCmp("fieldY").value);
+			},
 			listeners: {
+				afterRender: function() {					
+					if (Ext.getCmp("fieldX").value) Ext.getCmp("fieldX").selectByValue(Ext.getCmp("fieldX").value, true);
+					if (Ext.getCmp("fieldY").value) Ext.getCmp("fieldY").selectByValue(Ext.getCmp("fieldY").value, true);
+				},
                 hide: function(win) {                   
-//					chartLayersPanel.getStore().removeAll();
-					chartName.setValue("");
-					xAxis.setValue("");
-					yAxis.setValue("");
-					isDefault.setValue(false);
+					chartLayersPanel.getStore().removeAll();
+					Ext.getCmp("chartName").setValue("");
 					this.chartId = null;
 					this.updateCallback = null;
                 },

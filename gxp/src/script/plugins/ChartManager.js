@@ -195,7 +195,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 					renderer: function(value, metaData, record, rowIdx, colIdx, store) { 
 						var checked = "";
 						if (record.data.isDefault=="true") {checked="checked=true"}
-						return '<input '+ checked + ' onchange=Ext.getCmp("chartGridPanel").setDefault('+rowIdx+') type=radio >';
+						return '<input '+ checked + ' onchange=Ext.getCmp("chartGridPanel").setDefault('+rowIdx+') type=radio name=def>';
 					} 
 				},				
 				{
@@ -339,17 +339,13 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 							async: true,
 							params:{
 								service : "charts",
-								action  : "update",
-								name   : chartStore.data.items[index].data.name,
-								chartId  : chartStore.data.items[index].data.chartId,
-								url   	: chartStore.data.items[index].data.url,
-								x_axis  : chartStore.data.items[index].data.x_axis,
-								y_axis  : chartStore.data.items[index].data.y_axis,
-								isDefault : value
+								action  : "setDefault",
+								isDefault : value,
+								chartId : chartId
 							},
-							callback: function(request) 
+							callback: function(resp) 
 							{					
-								//alert(request.status);
+								var str = resp;
 							}					
 						});
 				}				

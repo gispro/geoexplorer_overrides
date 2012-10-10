@@ -1,11 +1,12 @@
 
 Ext.namespace("gxp.plugins");
 
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var chartStore = new Ext.data.JsonStore({ 
 	url       : 'charts.json',
 	root      : 'charts',
-	fields    : [ 'name', 'chartId', 'url', 'x_axis', 'y_axis', 'isDefault'],
+	fields    : [ 'name', 'chartId', 'url', 'x_axis', 'y_axis', 'isDefault', 'layers'],
 	listeners :
     {
    		load : function()
@@ -19,6 +20,8 @@ var chartStore = new Ext.data.JsonStore({
 	}  
 });
 
+
+
 gxp.plugins.ChartSource = Ext.extend(gxp.plugins.LayerSource,
 {
     ptype  : "gxp_chartsource",
@@ -28,6 +31,18 @@ gxp.plugins.ChartSource = Ext.extend(gxp.plugins.LayerSource,
 	{
 		chartStore.load();
 		return this.chartStore;
+	},
+	
+	getDefaultChart : function() {
+		for (var i=0; i< this.chartStore.data.length; i++) {
+			if (chartStore.data.items[i].json.isDefault=="true") {
+				return chartStore.data.items[i].json;
+			}
+		}		
+	},
+	
+	init : function() {
+		chartStore.load();
 	}
 });
 

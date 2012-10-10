@@ -63,11 +63,8 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
      */
 	actionText: "Actions",
 	
-    /** api: config[addActionText]
-     *  ``String``
-     *  Text for the Add action. None by default.
-     */
-   
+    XText: "X axis",
+	YText: "Y axis",
     /** api: config[addServerText]
      *  ``String``
      *  Text for add server button (i18n).
@@ -834,7 +831,10 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 			rec.data.names = new Array();
 			
 			for (var i = 0; i < rec.data.layers.length; i++){
-				rec.data.names[i] = layersStore.data.get(parseInt(i)).data.title;
+				for (var j=0; j<layersStore.data.items.length; j++) {
+					if (layersStore.data.items[j].data.name==rec.data.layers[i])
+						rec.data.names[i] = layersStore.data.items[j].data.title;
+				}
 			}
 			
 			animStore.removeAll();
