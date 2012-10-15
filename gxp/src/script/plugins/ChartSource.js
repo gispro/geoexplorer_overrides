@@ -9,9 +9,25 @@ var chartStore = new Ext.data.JsonStore({
 	fields    : [ 'name', 'chartId', 'url', 'x_axis', 'y_axis', 'isDefault', 'layers'],
 	listeners :
     {
-   		load : function()
+   		load : function(options)
    		{
-			//parseChartStore();
+			chartRoot.load(options);
+   		},
+		loadexception : function(o, arg, nul, e)
+		{
+			alert("chartStore.listeners - LoadException : " + e);         
+		} 
+	}  
+});
+
+var chartRoot = new Ext.data.JsonStore({ 
+	url       : 'charts.json',
+	fields    : [ 'charts', 'lastUpdate'],
+	listeners :
+    {
+   		load : function(options)
+   		{
+			if ((options)&&(options.callback)) options.callback.call(options.scope||this);
    		},
 		loadexception : function(o, arg, nul, e)
 		{
@@ -21,7 +37,6 @@ var chartStore = new Ext.data.JsonStore({
 });
 
 
-
 gxp.plugins.ChartSource = Ext.extend(gxp.plugins.LayerSource,
 {
     ptype  : "gxp_chartsource",
@@ -29,7 +44,7 @@ gxp.plugins.ChartSource = Ext.extend(gxp.plugins.LayerSource,
 	
 	getChartsStore : function () 
 	{
-		chartStore.load();
+		this.init();
 		return this.chartStore;
 	},
 	
@@ -41,8 +56,12 @@ gxp.plugins.ChartSource = Ext.extend(gxp.plugins.LayerSource,
 		}		
 	},
 	
-	init : function() {
-		chartStore.load();
+	getLastUpdate: function() {
+		return chartRoot.reader.jsonData.lastUpdate;
+	},
+	
+	init : function(options) {
+		chartStore.load(options);		
 	}
 });
 

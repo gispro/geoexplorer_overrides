@@ -117,6 +117,8 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      */
 	layersRequiredErrorText: "Please include at least one layer to this chart",
 	
+	fieldsRequiredErrorText: "Please select axis labels",
+	
 	/** api: config[addLayerSourceErrorText]
      *  ``String``
      *  Text for an error message when there are no names for x-axis labels
@@ -392,8 +394,8 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             }, this);
         }
 
-        var capGridPanel = new Ext.grid.GridPanel({
-            id: "capGridPanel",
+        var layersGridPanel = new Ext.grid.GridPanel({
+            id: "layersGridPanel",
 			store: this.target.layerSources[data[idx][0]].store,
             autoScroll: true,
 			title: this.availableLayersText,
@@ -447,7 +449,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
             listeners: {
                 scope: this,				
 				afterrender: function() {
-					var menu = capGridPanel.getView().hmenu.items;				
+					var menu = layersGridPanel.getView().hmenu.items;				
  					for (var i in menu.items) {
 						if (menu.items[i].itemId=="asc") menu.items[i].text = this.ascText;
 						else if (menu.items[i].itemId=="desc") menu.items[i].text = this.descText;
@@ -595,6 +597,10 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 		// param b: boolean
 		checkFields = function (b, sc) {
 			var res = true;
+			if ((fieldXvar.getValue()=="")||(fieldYvar.getValue()=="")){
+				Ext.Msg.alert(this.errorTitleText, this.fieldsRequiredErrorText);
+				res = false;
+			}
 			if (chartName.getValue()!="") {
 				if (chartLayersPanel.getStore().getCount()>0) {
 					if (!b) { Ext.Msg.alert(this.errorTitleText, this.xaxisRequiredErrorText); res = false;}
@@ -704,12 +710,12 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 					
 					if (app.layerSources[sourceComboBox.getValue()]) {
 						
-						capGridPanel.enable();
+						layersGridPanel.enable();
 						chartLayersPanel.enable();
 					}
 					else {
 						Ext.Msg.alert("Ошибка", "Невозможно получить информацию от данного источника");
-						capGridPanel.disable();
+						layersGridPanel.disable();
 						chartLayersPanel.disable();
 					}	
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -721,8 +727,8 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 							source = new gxp.plugins.RssSource();
 						if (source)
 						{
-							capGridPanel.reconfigure(source.getLayersStore(), capGridPanel.getColumnModel());
-							capGridPanel.getView().focusRow(0);
+							layersGridPanel.reconfigure(source.getLayersStore(), layersGridPanel.getColumnModel());
+							layersGridPanel.getView().focusRow(0);
 						}						
 					}
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -733,8 +739,8 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 							source = new gxp.plugins.ChartSource();
 						if (source)
 						{
-							capGridPanel.reconfigure(source.getLayersStore(), capGridPanel.getColumnModel());
-							capGridPanel.getView().focusRow(0);
+							layersGridPanel.reconfigure(source.getLayersStore(), layersGridPanel.getColumnModel());
+							layersGridPanel.getView().focusRow(0);
 						}						
 					}
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -746,18 +752,18 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 						if (source)
 						{
 							var url = source.getLayersURL(record.get("title"));
-							capGridPanel.reconfigure(source.getLayersStore(url), capGridPanel.getColumnModel());
-							capGridPanel.getView().focusRow(0);
+							layersGridPanel.reconfigure(source.getLayersStore(url), layersGridPanel.getColumnModel());
+							layersGridPanel.getView().focusRow(0);
 						}
 					}
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 					else
 					{
 						var source = this.target.layerSources[record.get("id")];
-						capGridPanel.reconfigure(source.store, capGridPanel.getColumnModel());
+						layersGridPanel.reconfigure(source.store, layersGridPanel.getColumnModel());
 						// TODO: remove the following when this Ext issue is addressed
 						// http://www.extjs.com/forum/showthread.php?100345-GridPanel-reconfigure-should-refocus-view-to-correct-scroller-height&p=471843
-						capGridPanel.getView().focusRow(0);
+						layersGridPanel.getView().focusRow(0);
 						this.setSelectedSource(source);
 					}
 					
@@ -937,7 +943,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 		
 		var populateSelectedLayers = function(rec, server) {
 			var chartStore = Ext.getCmp("chartLayersPanel").getStore();
-			var layersStore = Ext.getCmp("capGridPanel").getStore();
+			var layersStore = Ext.getCmp("layersGridPanel").getStore();
 			
 			chartRec = Ext.data.Record.create([
 				{name: "title", type: "string"},
@@ -1105,7 +1111,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 			defaults: {
 				split: true,
 			},
-            items: [capGridPanel, chartLayersPanel]
+            items: [layersGridPanel, chartLayersPanel]
         };
         
         if (this.instructionsText) {
@@ -1170,12 +1176,19 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
                 hide: function(win) {                   
 					chartLayersPanel.getStore().removeAll();
 					Ext.getCmp("chartName").setValue("");
+					Ext.getCmp("fieldY").setValue("");
+					Ext.getCmp("fieldY").getStore().clearData();
+					Ext.getCmp("fieldX").setValue("");
+					Ext.getCmp("fieldX").getStore().clearData();
 					this.chartId = null;
 					this.updateCallback = null;
                 },
                 show: function(win) {
                     this.setSelectedSource(this.target.layerSources[data[idx][0]]);
                 },
+				resize: function(win) {
+					layersGridPanel.setWidth(this.capGrid.getWidth()/2);
+				},
                 scope: this
             }
         }, this.initialConfig.outputConfig));        

@@ -217,7 +217,11 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 								scope: this,
 								handler: function(grid, rowIndex, colIndex) {
 									var rec = grid.getStore().getAt(rowIndex);
-									askForDelete(rec, this);
+									if (rec.data.isDefault!="true") {
+										askForDelete(rec, this);
+									} else {
+										Ext.Msg.alert(this.deleteErrorHeader, this.deleteErrorText);
+									}
 								}
 							}]
 				}
