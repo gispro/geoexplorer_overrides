@@ -627,7 +627,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 		};
 		
         var sourceComboBox = new Ext.form.ComboBox({
-            id: "sourceComboBox",
+            id: "sourceComboBoxAnimation",
 			store: sources,
             valueField: "id",
             displayField: "title",
@@ -789,10 +789,10 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 				}
 			});
 			
-			if (!found) {				
+			/*if (!found) {				
 				Ext.Msg.alert(scope.errorText, scope.aimationInvalidErrorText);
 				return false;
-			}
+			}*/
 			
 			var conf = {url: url, restUrl: restUrl};
 			if (title) {
@@ -1043,6 +1043,9 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
                 show: function(win) {
                     this.setSelectedSource(this.target.layerSources[data[idx][0]]);
                 },
+				resize: function(win) {
+					capGridPanel.setWidth(this.capGrid.getWidth()/2);
+				},
                 scope: this
             }
         }, this.initialConfig.outputConfig));        

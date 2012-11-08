@@ -170,13 +170,14 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 			setDefault : function(rowIdx) { 
 				for(var index=0; index<chartStore.data.items.length; index++) 
 				{ 
-					if(chartStore.data.items[index].data.isDefault=="true") 
+					if(chartStore.data.items[index].data.isDefault) 
 						{							
-							chartStore.data.items[index].set('isDefault',"false");    
+							chartStore.data.items[index].set('isDefault',false);    
 						}
 				} 
-				chartStore.data.items[rowIdx].set('isDefault',"true"); 
+				chartStore.data.items[rowIdx].set('isDefault',true); 				
 				Ext.getCmp("chartGridPanel").editedChartId = chartStore.data.items[rowIdx].get('chartId');
+				storeSetDefault(Ext.getCmp("chartGridPanel").editedChartId);
 			} ,
 			//fields    : [ {name: 'name', mapping: 'owner'}, 'chartId', 'url', 'x_axis', 'y_axis', 'isDefault'],
             colModel: new Ext.grid.ColumnModel([
@@ -194,7 +195,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 					menuDisabled: true, 
 					renderer: function(value, metaData, record, rowIdx, colIdx, store) { 
 						var checked = "";
-						if (record.data.isDefault=="true") {checked="checked=true"}
+						if (record.data.isDefault) {checked="checked=true"}
 						return '<input '+ checked + ' onchange=Ext.getCmp("chartGridPanel").setDefault('+rowIdx+') type=radio name=def>';
 					} 
 				},				
@@ -217,7 +218,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 								scope: this,
 								handler: function(grid, rowIndex, colIndex) {
 									var rec = grid.getStore().getAt(rowIndex);
-									if (rec.data.isDefault!="true") {
+									if (!rec.data.isDefault) {
 										askForDelete(rec, this);
 									} else {
 										Ext.Msg.alert(this.deleteErrorHeader, this.deleteErrorText);
@@ -231,7 +232,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 				afterrender: function() {
 					chartStore.on('load', function () {
 						for (var index=0; index<chartStore.getCount(); index++){
-							if (chartStore.data.items[index].data.isDefault=="true")
+							if (chartStore.data.items[index].data.isDefault)
 								Ext.getCmp("chartGridPanel").startChartId = chartStore.data.items[index].data.chartId;
 						}
 					});
@@ -323,36 +324,29 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
                 text: this.doneText,
 				iconCls: "save",
                 handler: function() {
-					var grid = Ext.getCmp("chartGridPanel");
-					if (grid.startChartId != grid.editedChartId) {
-						storeSetDefault(grid.startChartId, "false");
-						storeSetDefault(grid.editedChartId, "true");
-					}
+					//var grid = Ext.getCmp("chartGridPanel");
+					//storeSetDefault(grid.editedChartId);
 					this.chartGrid.hide();
                 },
                 scope: this
             })
         ];
              
-		var storeSetDefault = function (chartId, value) {
-				for (var index=0; index<chartStore.getCount(); index++) {
-					if(chartStore.data.items[index].data.chartId==chartId)
-						OpenLayers.Request.issue({
-							method: "GET",
-							url: "save",
-							async: true,
-							params:{
-								service : "charts",
-								action  : "setDefault",
-								isDefault : value,
-								chartId : chartId
-							},
-							callback: function(resp) 
-							{					
-								var str = resp;
-							}					
-						});
-				}				
+		var storeSetDefault = function (chartId) {
+			OpenLayers.Request.issue({
+				method: "GET",
+				url: "save",
+				async: true,
+				params:{
+					service : "charts",
+					action  : "setDefault",
+					chartId : chartId
+				},
+				callback: function(resp) 
+				{					
+					var str = resp;
+				}					
+			});
 		}
 			
         //TODO use addOutput here instead of just applying outputConfig

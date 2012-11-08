@@ -322,14 +322,7 @@
                         }
 
                   }
-                  //, {
-                    //xtype: "textfield",
-                    //ref: "../extent",
-                    //anchor: "100%",
-                    //fieldLabel: this.currentTextText,
-                    //value: this.getFormattedMapExtent(),
-                    //readOnly: true
-                  //}
+                  
                 ]
             }, {
                 xtype: "fieldset",
@@ -458,8 +451,15 @@
               y: 100,
               listeners: {
                 scope: this,
-                show: function(){ if(this.queryForm)this.selectLayer(this.queryForm.geom.getValue().inputValue); },
-                hide: function(){ this.clearLayers(); }
+                show: function(){ 
+					if(this.queryForm)this.selectLayer(this.queryForm.geom.getValue().inputValue); 
+					app.tools.gxp_wmsgetfeatureinfo_ctl.actions[0].setDisabled(true); 
+					Ext.getCmp("navigationAction").toggle();
+				},
+                hide: function(){ 
+					this.clearLayers(); 					
+					app.tools.gxp_wmsgetfeatureinfo_ctl.actions[0].setDisabled(false); 
+				}
               }
           };
 
@@ -527,6 +527,8 @@
             scope: this
         });
 
+		this.queryForm.hide = function() { alert('123123'); }
+		
         return queryForm;
     }
 

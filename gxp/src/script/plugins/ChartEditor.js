@@ -644,7 +644,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 		};
 		
         var sourceComboBox = new Ext.form.ComboBox({
-            id: "sourceComboBox",
+            id: "sourceComboBoxCharts",
 			store: sources,
             valueField: "id",
             displayField: "title",
@@ -808,44 +808,40 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 		});
 		
 		var refreshFieldsStores = function() {
-			layer = app.layerSources[sourceComboBox.getValue()].url.split("resources/")[1].split("/wms")[0] + ":" + Ext.getCmp("chartLayersPanel").getStore().data.items[0].data.name;
 			
-			var params = {
-				BBOX: "-30545459.490957,-11016716.011152,30545459.490957,11016716.011152"
-				,FEATURE_COUNT: 1
-				,HEIGHT: 563
-				,INFO_FORMAT: "text/plain"				
-				,REQUEST: "GetFeatureInfo"
-				,SERVICE: "WMS"
-				,VERSION: "1.1.1"
-				,WIDTH: 1561
-				,X: 919
-				,Y: 299
-				,srs: "EPSG:900913"	
-				,QUERY_LAYERS : layer
-				,LAYERS : layer
+			Ext.getCmp("fieldX").setValue('');
+			Ext.getCmp("fieldY").setValue('');
+			
+			if (Ext.getCmp("chartLayersPanel").getStore().data.items.length==0) return;
+			
+			layer = /*app.layerSources[sourceComboBox.getValue()].url.split("resources/")[1].split("/wms")[0] + ":" + */
+			Ext.getCmp("chartLayersPanel").getStore().data.items[0].data.name;
+			
+			var params = {			
+				request: "describeFeatureType"
+				,typename : layer
 			}
-			
 			var xFields, yFields;
 			var parser = new GeoExt.PrickerParser("translate");			
 			parser.doOnParce(setComboBoxes, this);
 			
-			var r = OpenLayers.Request.POST({
-			  url: app.layerSources[sourceComboBox.getValue()].url.split(layer.split(":")[0])[0]+"wms",
-			  data: OpenLayers.Util.getParameterString(params),
-			  headers: {
-				"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-			  },
-			  callback: function(respond){
-				if(respond.status == 200){
-					parser.parse([respond.responseText]);
-				}
-				else {
-					Ext.Msg.alert(this.errorText, this.wrongAxisRequest);
-				}
-			  }
+			OpenLayers.Request.issue({
+				method: "GET",
+				url: app.layerSources[sourceComboBox.getValue()].url.split(layer.split(":")[0])[0]+"wfs",
+				params:{
+					request: "describeFeatureType"
+					,typename : layer
+				},
+				callback: function(respond){
+					if(respond.status == 200){
+						parser.parseDescribeFeatureType([respond.responseXML]);
+					}
+					else {
+						Ext.Msg.alert(this.errorText, this.wrongAxisRequest);
+					}
+				}					
 			});
-						
+					
 		}
 		
 		new Ext.Button({
@@ -973,10 +969,10 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 			}								
 			chartStore.commitChanges();
 			
-			if (rec) {
+			if (rec) {				
+				refreshFieldsStores();														
 				Ext.getCmp("fieldX").setValue(rec.data.x_axis, 0);
 				Ext.getCmp("fieldY").setValue(rec.data.y_axis, 0);
-				refreshFieldsStores();														
 			}
 		}		
 		

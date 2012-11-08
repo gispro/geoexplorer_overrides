@@ -15,7 +15,7 @@ var chartStore = new Ext.data.JsonStore({
    		},
 		loadexception : function(o, arg, nul, e)
 		{
-			alert("chartStore.listeners - LoadException : " + e);         
+			//alert("chartStore.listeners - LoadException : " + e);         
 		} 
 	}  
 });
@@ -31,7 +31,7 @@ var chartRoot = new Ext.data.JsonStore({
    		},
 		loadexception : function(o, arg, nul, e)
 		{
-			alert("chartStore.listeners - LoadException : " + e);         
+			//alert("chartStore.listeners - LoadException : " + e);         
 		} 
 	}  
 });
@@ -50,7 +50,7 @@ gxp.plugins.ChartSource = Ext.extend(gxp.plugins.LayerSource,
 	
 	getDefaultChart : function() {
 		for (var i=0; i< this.chartStore.data.length; i++) {
-			if (chartStore.data.items[i].json.isDefault=="true") {
+			if (chartStore.data.items[i].json.isDefault) {
 				return chartStore.data.items[i].json;
 			}
 		}		

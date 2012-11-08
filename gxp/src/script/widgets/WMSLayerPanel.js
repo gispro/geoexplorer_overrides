@@ -41,7 +41,11 @@
 		 this.layerRecord.data.layer.params.TILED = false;
         }
 
-        this.items.push( this.createGetFeatureInfoFieldsPanel() )
+        if (!this.layerRecord.get("resource")) {			
+			this.items.push( this.createGetFeatureInfoFieldsPanel() );
+		}
+		
+		
         
         // only add the Styles panel if we know for sure that we have styles
         if (this.styling && gxp.WMSStylesDialog && this.layerRecord.get("styles")) {
@@ -61,10 +65,17 @@
             this.items.push(this.createStylesPanel(url));
         }
 
-        var colonPos = this.layerRecord.get("name").indexOf(":");
-        if(colonPos>0)
+        //var colonPos = this.layerRecord.get("name").indexOf(":");
+        //if(colonPos>0)
         {
-            var esimoServiceParam = this.layerRecord.get("name").substring(0, colonPos);
+            //var esimoServiceParam = this.layerRecord.get("name").substring(0, colonPos);
+			var esimoServiceParam="";
+			if (this.layerRecord.get("resource")) {
+				esimoServiceParam = this.layerRecord.get("resource");
+			} else {			
+				var l = app.layerSources[this.layerRecord.get("source")].url.split("/wms")[0].split("/");
+				esimoServiceParam = l[l.length-1]; 
+			}
              this.items.push({
                 xtype: 'panel',
                 title: "Метаданные",
@@ -268,25 +279,27 @@
               align: 'center',
               handler: function(e){
 
-                var url = _this.featureManager.target.layerSources[ _this.layerRecord.get('source') ].url;
+                var url = _this.featureManager.target.layerSources[ _this.layerRecord.get('source') ].restUrl.replace("rest", "wps");
 
-                OpenLayers.Request.POST({
+                var req = OpenLayers.Request.POST({
                     url: url,
                     data: '<?xml version="1.0" encoding="UTF-8"?>' +
                     '<wps:Execute version="1.0.0" service="WPS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.opengis.net/wps/1.0.0" xmlns:wfs="http://www.opengis.net/wfs" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:wcs="http://www.opengis.net/wcs/1.1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsAll.xsd">' +
                     '<ows:Identifier>gs:Aggregate</ows:Identifier>' +
                     '<wps:DataInputs>' +
-                    '<wps:Input>' +
+                    
+					'<wps:Input>' +
                     '<ows:Identifier>features</ows:Identifier>' +
                     '<wps:Reference mimeType="text/xml; subtype=wfs-collection/1.0" xlink:href="http://geoserver/wfs" method="POST">' +
                     '<wps:Body>' +
                     '<wfs:GetFeature service="WFS" version="1.0.0" outputFormat="GML2">' +
-                    '<wfs:Query typeName="' + _this.layerRecord.get('name') + '"/>' +
+                    '<wfs:Query typeName="' +  _this.layerRecord.get('name') + '"/>' +
                     '</wfs:GetFeature>' +
                     '</wps:Body>' +
                     '</wps:Reference>' +
                     '</wps:Input>' +
-                    '<wps:Input>' +
+                    
+					'<wps:Input>' +
                     '<ows:Identifier>aggregationAttribute</ows:Identifier>' +
                     '<wps:Data>' +
                     '<wps:LiteralData>' + e.record.json[0] + '</wps:LiteralData>' +
@@ -348,6 +361,7 @@
                     '<wps:LiteralData>false</wps:LiteralData>' +
                     '</wps:Data>' +
                     '</wps:Input>' +
+					
                     '</wps:DataInputs>' +
                     '<wps:ResponseForm>' +
                     '<wps:RawDataOutput mimeType="text/xml">' +

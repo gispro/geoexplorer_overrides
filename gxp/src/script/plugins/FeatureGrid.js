@@ -3,6 +3,43 @@
     
     zoomToFeaturesTip: 'Zoom',
 
+	/** api: config[ascText]
+     *  ``String``
+     *  Text for asc header menu button (i18n).
+     */
+    ascText: "Sort ascenging",
+	
+	/** api: config[descText]
+     *  ``String``
+     *  Text for desc header menu button  (i18n).
+     */
+    descText: "Sort descending",
+	
+	/** api: config[colText]
+     *  ``String``
+     *  Text for column header menu button  (i18n).
+     */
+    colText: "Columns",
+	
+	getFeatureInfoPanelFieldNameHeader: 'Name',
+    getFeatureInfoPanelFieldTranslateHeader: 'Translate',
+    getFeatureInfoPanelFieldShowHeader: 'Show',
+    getFeatureInfoPanelFieldStatisticWindowTitle: 'Statistic',
+    getFeatureInfoPanelFieldStatisticHeader: 'Statistic',
+    wpsLiterals: {
+      Count: 'Count',
+      Average: 'Average',
+      Max: 'Max',
+      Median: 'Median',
+      Min: 'Min',
+      StandardDeviation: 'StdDev',
+      Sum: 'Sum'
+    },
+
+    statisticNotAvailableText: 'Statistic not available',
+	
+	statisticsText: 'Statistic',
+	
     //OVERRIDED zoom to features botton added
     /** api: method[addOutput]
      */
@@ -128,6 +165,152 @@
               }
             ] : [])),
             listeners: {
+				scope: this,				
+				afterrender: function() {
+					var menu = featureGrid.getView().hmenu;
+					var menuitems = menu.items;				
+ 					for (var i in menuitems.items) {
+						if (menuitems.items[i].itemId=="asc") menuitems.items[i].text = this.ascText;
+						else if (menuitems.items[i].itemId=="desc") menuitems.items[i].text = this.descText;
+						else if (menuitems.items[i].itemId=="columns") menuitems.items[i].text = this.colText;
+					}
+					menu.addSeparator();
+					menu.addMenuItem({ 
+						text: this.statisticsText, 
+						handler : function(e) {
+							var url = app.layerSources[ featureManager.layerRecord.get("source") ].restUrl.replace("rest", "wps");
+
+							OpenLayers.Request.POST({
+								url: url,
+								data: '<?xml version="1.0" encoding="UTF-8"?>' +
+								'<wps:Execute version="1.0.0" service="WPS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.opengis.net/wps/1.0.0" xmlns:wfs="http://www.opengis.net/wfs" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:wcs="http://www.opengis.net/wcs/1.1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsAll.xsd">' +
+								'<ows:Identifier>gs:Aggregate</ows:Identifier>' +
+								'<wps:DataInputs>' +
+								'<wps:Input>' +
+								'<ows:Identifier>features</ows:Identifier>' +
+								'<wps:Reference mimeType="text/xml; subtype=wfs-collection/1.0" xlink:href="http://geoserver/wfs" method="POST">' +
+								'<wps:Body>' +
+								'<wfs:GetFeature service="WFS" version="1.0.0" outputFormat="GML2">' +
+								'<wfs:Query typeName="' +featureManager.layerRecord.get('name') + '"/>' +
+								'</wfs:GetFeature>' +
+								'</wps:Body>' +
+								'</wps:Reference>' +
+								'</wps:Input>' +
+								'<wps:Input>' +
+								'<ows:Identifier>aggregationAttribute</ows:Identifier>' +
+								'<wps:Data>' +
+								'<wps:LiteralData>' + featureGrid.getColumns()[featureGrid.getView().activeHdIndex].dataIndex + '</wps:LiteralData>' +
+								'</wps:Data>' +
+								'</wps:Input>' +
+
+								'<wps:Input>' +
+								'<ows:Identifier>function</ows:Identifier>' +
+								'<wps:Data>' +
+								'<wps:LiteralData>Count</wps:LiteralData>' +
+								'</wps:Data>' +
+								'</wps:Input>' +
+
+								'<wps:Input>' +
+								'<ows:Identifier>function</ows:Identifier>' +
+								'<wps:Data>' +
+								'<wps:LiteralData>Average</wps:LiteralData>' +
+								'</wps:Data>' +
+								'</wps:Input>' +
+
+								'<wps:Input>' +
+								'<ows:Identifier>function</ows:Identifier>' +
+								'<wps:Data>' +
+								'<wps:LiteralData>Max</wps:LiteralData>' +
+								'</wps:Data>' +
+								'</wps:Input>' +
+
+								'<wps:Input>' +
+								'<ows:Identifier>function</ows:Identifier>' +
+								'<wps:Data>' +
+								'<wps:LiteralData>Median</wps:LiteralData>' +
+								'</wps:Data>' +
+								'</wps:Input>' +
+
+								'<wps:Input>' +
+								'<ows:Identifier>function</ows:Identifier>' +
+								'<wps:Data>' +
+								'<wps:LiteralData>Min</wps:LiteralData>' +
+								'</wps:Data>' +
+								'</wps:Input>' +
+
+								'<wps:Input>' +
+								'<ows:Identifier>function</ows:Identifier>' +
+								'<wps:Data>' +
+								'<wps:LiteralData>StdDev</wps:LiteralData>' +
+								'</wps:Data>' +
+								'</wps:Input>' +
+
+								'<wps:Input>' +
+								'<ows:Identifier>function</ows:Identifier>' +
+								'<wps:Data>' +
+								'<wps:LiteralData>Sum</wps:LiteralData>' +
+								'</wps:Data>' +
+								'</wps:Input>' +
+
+								'<wps:Input>' +
+								'<ows:Identifier>singlePass</ows:Identifier>' +
+								'<wps:Data>' +
+								'<wps:LiteralData>false</wps:LiteralData>' +
+								'</wps:Data>' +
+								'</wps:Input>' +
+								'</wps:DataInputs>' +
+								'<wps:ResponseForm>' +
+								'<wps:RawDataOutput mimeType="text/xml">' +
+								'<ows:Identifier>result</ows:Identifier>' +
+								'</wps:RawDataOutput>' +
+								'</wps:ResponseForm>' +
+								'</wps:Execute>'
+								,headers: {
+								  "Content-Type": "text/xml; subtype=gml/3.1.1"
+								},
+								callback: function(request){
+								  if(request.status == 200){
+
+									if(request.responseXML.firstChild.nodeName == 'AggregationResults'){
+									  var t = '';
+									  var responseArr = request.responseXML.firstChild.childNodes;
+									  for(var i = 0, len = responseArr.length; i<len; i++){
+										t += gxp.plugins.FeatureGrid.prototype.wpsLiterals[ responseArr[i].nodeName ] + ': ' + responseArr[i].firstChild.data + '<br/>';
+									  }
+
+									  Ext.MessageBox.show({
+										title : gxp.plugins.FeatureGrid.prototype.getFeatureInfoPanelFieldStatisticWindowTitle,
+										msg : t,
+										buttons: Ext.MessageBox.OK,
+										minWidth: 300
+									  });
+									} else {
+									  Ext.MessageBox.show({
+										title : gxp.plugins.FeatureGrid.prototype.getFeatureInfoPanelFieldStatisticWindowTitle,
+										msg : gxp.plugins.FeatureGrid.prototype.statisticNotAvailableText,
+										buttons: Ext.MessageBox.OK,
+										minWidth: 300
+									  });
+									}
+
+								  } else {
+									  Ext.MessageBox.show({
+										title : gxp.plugins.FeatureGrid.prototype.getFeatureInfoPanelFieldStatisticWindowTitle,
+										msg : gxp.plugins.FeatureGrid.prototype.statisticNotAvailableText,
+										buttons: Ext.MessageBox.OK,
+										minWidth: 300
+									  });
+
+								  }
+								},
+								scope: this,
+								proxy: app.proxy
+							});
+
+						}
+					});
+				},
+			
                 "added": function(cmp, ownerCt) {
                     function onClear() {
                         this.displayTotalResults();
@@ -166,7 +349,12 @@
                 },
                 scope: this
             },
-            contextMenu: new Ext.menu.Menu({items: []})
+            contextMenu: new Ext.menu.Menu({items: [
+				{
+					text: this.statisticsText,
+					handler: function() { alert ('123'); }
+				}
+			]})
         }, config || {});
         var featureGrid = gxp.plugins.FeatureGrid.superclass.addOutput.call(this, config);
         

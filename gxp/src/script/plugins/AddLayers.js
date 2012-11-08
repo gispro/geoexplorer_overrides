@@ -864,7 +864,8 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             });
             if (record) {
                 layer = record.getLayer();
-                if (layer.maxExtent) {
+                layer.options.singleTile = true;
+				if (layer.maxExtent) {
                     if (!extent) {
                         extent = record.getLayer().maxExtent.clone();
                     } else {

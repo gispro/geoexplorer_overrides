@@ -10,7 +10,15 @@
      */
     createLayerRecord: function(config) {
         var record;
-        var index = this.store.findExact("name", config.name);
+		var name;
+		var splitted  = config.name.split(":");
+		if (splitted.length>1) name = splitted[1]; 
+		else name = config.name;
+        var index=-1;
+		this.store.each(function(record, idx){
+			if ((record.get('name') == name)||(record.get('name') == config.name))
+				index = idx;
+		});		//= this.store.findExact("name", name);
         if (index > -1) {
             var original = this.store.getAt(index);
 
@@ -61,7 +69,7 @@
                       opacity: ("opacity" in config) ? config.opacity : 1,
                       buffer: ("buffer" in config) ? config.buffer : 1,
                       projection: layerProjection,
-                      singleTile: "singleTile" in config ? config.singleTile : false
+                      singleTile: true
                   }
               );
             }else{
@@ -74,7 +82,7 @@
                       visibility: ("visibility" in config) ? config.visibility : true,
                       opacity: ("opacity" in config) ? config.opacity : 1,
                       buffer: ("buffer" in config) ? config.buffer : 1,
-                      singleTile: "singleTile" in config ? config.singleTile : false
+                      singleTile: config.group!="background"
                   }
               );
             }
