@@ -860,6 +860,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
         for (var i=0, ii=records.length; i<ii; ++i) {
             record = source.createLayerRecord({
                 name: records[i].get("name"),
+				styles: records[i].get("styles"),
                 source: source.id
             });
             if (record) {

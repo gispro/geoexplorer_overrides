@@ -825,22 +825,26 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 			var parser = new GeoExt.PrickerParser("translate");			
 			parser.doOnParce(setComboBoxes, this);
 			
-			OpenLayers.Request.issue({
-				method: "GET",
-				url: app.layerSources[sourceComboBox.getValue()].url.split(layer.split(":")[0])[0]+"wfs",
-				params:{
-					request: "describeFeatureType"
-					,typename : layer
-				},
-				callback: function(respond){
-					if(respond.status == 200){
-						parser.parseDescribeFeatureType([respond.responseXML]);
-					}
-					else {
-						Ext.Msg.alert(this.errorText, this.wrongAxisRequest);
-					}
-				}					
-			});
+			if (app.layerSources[sourceComboBox.getValue()].url)			
+				OpenLayers.Request.issue({
+					method: "GET",
+					url: app.layerSources[sourceComboBox.getValue()].url.split(layer.split(":")[0])[0]+"wfs",
+					params:{
+						request: "describeFeatureType"
+						,typename : layer
+					},
+					callback: function(respond){
+						if(respond.status == 200){
+							parser.parseDescribeFeatureType([respond.responseXML]);
+						}
+						else {
+							Ext.Msg.alert(this.errorText, this.wrongAxisRequest);
+						}
+					}					
+				});
+			else {
+				Ext.Msg.alert(gxp.plugins.ChartEditor.prototype.errorText, gxp.plugins.ChartEditor.prototype.wrongAxisRequest);
+			}
 					
 		}
 		
