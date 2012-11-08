@@ -128,6 +128,26 @@
                         }
                     }, this);
 
+                    if(schema.baseParams.TYPENAME){
+                        var workSpacePos = schema.baseParams.TYPENAME.indexOf(':');
+                        if(workSpacePos>0){
+                            var wfsPos = schema.url.indexOf('/wfs');
+                            if(wfsPos>0){
+                                var wfsWorkSpace = schema.baseParams.TYPENAME.substring(0, workSpacePos);
+                                schema.url = 
+                                    schema.url.substring(0, wfsPos) + 
+                                    '/' +
+                                    wfsWorkSpace +
+                                    schema.url.substring(wfsPos);
+                                
+                                wfsPos = schema.url.indexOf('/WfsDispatcher');
+                                if(wfsPos>0){
+                                    schema.url = schema.url.substring(0, wfsPos) + '?';
+                                }
+                            }
+                        }
+                    }
+
                     var protocolOptions = {
                         srsName: this.getProjection(record).getCode(),
                         url: schema.url,
