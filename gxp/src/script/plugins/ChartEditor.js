@@ -708,16 +708,16 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
                 select: function(combo, record, index)
 				{
 					
-					if (app.layerSources[sourceComboBox.getValue()]) {
+					//if (app.layerSources[sourceComboBox.getValue()]) {
 						
-						layersGridPanel.enable();
-						chartLayersPanel.enable();
-					}
+						//layersGridPanel.enable();
+						//chartLayersPanel.enable();
+					/*}
 					else {
 						Ext.Msg.alert("Ошибка", "Невозможно получить информацию от данного источника");
 						layersGridPanel.disable();
 						chartLayersPanel.disable();
-					}	
+					}*/	
 					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 					chartLayersPanel.getStore().filter("server",sourceComboBox.getValue());  // set selected layers filter					
 					if (record.get("id") === 'rss')
@@ -825,10 +825,10 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 			var parser = new GeoExt.PrickerParser("translate");			
 			parser.doOnParce(setComboBoxes, this);
 			
-			if (app.layerSources[sourceComboBox.getValue()].url)			
+			if (app.layerSources[Ext.getCmp("sourceComboBoxCharts").getValue()].url)			
 				OpenLayers.Request.issue({
 					method: "GET",
-					url: app.layerSources[sourceComboBox.getValue()].url.split(layer.split(":")[0])[0]+"wfs",
+					url: app.layerSources[Ext.getCmp("sourceComboBoxCharts").getValue()].url.split(layer.split(":")[0])[0]+"wfs",
 					params:{
 						request: "describeFeatureType"
 						,typename : layer
