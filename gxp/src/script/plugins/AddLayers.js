@@ -861,11 +861,12 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             record = source.createLayerRecord({
                 name: records[i].get("name"),
 				styles: records[i].get("rubstyles"),
-				rubricatorNode: records[i].get("rubricatorNode"),
+				rubricatorNode: records[i].get("rubricatorNode"),				
 				title: records[i].get("title"),
                 source: source.id
             });
             if (record) {
+				record.data.rid = records[i].get("rid");
                 layer = record.getLayer();
                 layer.options.singleTile = true;
 				if (layer.maxExtent) {
