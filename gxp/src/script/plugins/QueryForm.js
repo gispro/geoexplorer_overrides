@@ -527,7 +527,7 @@
             scope: this
         });
 
-		this.queryForm.hide = function() { alert('123123'); }
+//		this.queryForm.hide = function() { alert('123123'); }
 		
         return queryForm;
     }
