@@ -866,6 +866,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                 source: source.id
             });
             if (record) {
+				record.data.rid = records[i].get("rid");
                 layer = record.getLayer();
                 layer.options.singleTile = true;
 				if (layer.maxExtent) {
