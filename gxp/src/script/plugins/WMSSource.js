@@ -22,7 +22,7 @@
         if (index > -1) {
             var original = this.store.getAt(index);
 
-            var layer = original.getLayer();
+            var layer = original.getLayer().clone();
 
             /**
              * TODO: The WMSCapabilitiesReader should allow for creation
@@ -50,11 +50,21 @@
             }
             
             // use all params from original
-            var params = Ext.applyIf({
-                STYLES: config.styles,
-                FORMAT: config.format,
-                TRANSPARENT: config.transparent
-            }, layer.params);
+            
+			if (config.styles) 
+				var params = Ext.applyIf({
+					STYLES: config.styles,
+					FORMAT: config.format,
+					TRANSPARENT: config.transparent
+				}, layer.params);
+			else
+				var params = Ext.applyIf({
+					FORMAT: config.format,
+					TRANSPARENT: config.transparent
+				}, layer.params);	
+			if (config.rubricatorNode) {
+				params.rubricatorNode = config.rubricatorNode;
+			}
 
             if(!this.viewMangerUsed){
               layer = new OpenLayers.Layer.WMS(

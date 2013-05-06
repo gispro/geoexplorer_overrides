@@ -860,6 +860,9 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
         for (var i=0, ii=records.length; i<ii; ++i) {
             record = source.createLayerRecord({
                 name: records[i].get("name"),
+				styles: records[i].get("rubstyles"),
+				rubricatorNode: records[i].get("rubricatorNode"),
+				title: records[i].get("title"),
                 source: source.id
             });
             if (record) {
@@ -893,6 +896,8 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             }
             this.target.tools[actionPlugin].addOutput(outputConfig);
         }
+		
+		if (record) return record.id;
     },
     
     /** private: method[isEligibleForUpload]

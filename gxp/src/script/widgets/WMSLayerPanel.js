@@ -279,138 +279,151 @@
               align: 'center',
               handler: function(e){
 
-                var url = _this.featureManager.target.layerSources[ _this.layerRecord.get('source') ].restUrl.replace("rest", "wps");
-
-                var req = OpenLayers.Request.POST({
-                    url: url,
-                    data: '<?xml version="1.0" encoding="UTF-8"?>' +
-                    '<wps:Execute version="1.0.0" service="WPS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.opengis.net/wps/1.0.0" xmlns:wfs="http://www.opengis.net/wfs" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:wcs="http://www.opengis.net/wcs/1.1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsAll.xsd">' +
-                    '<ows:Identifier>gs:Aggregate</ows:Identifier>' +
-                    '<wps:DataInputs>' +
-                    
-					'<wps:Input>' +
-                    '<ows:Identifier>features</ows:Identifier>' +
-                    '<wps:Reference mimeType="text/xml; subtype=wfs-collection/1.0" xlink:href="http://geoserver/wfs" method="POST">' +
-                    '<wps:Body>' +
-                    '<wfs:GetFeature service="WFS" version="1.0.0" outputFormat="GML2">' +
-                    '<wfs:Query typeName="' +  _this.layerRecord.get('name') + '"/>' +
-                    '</wfs:GetFeature>' +
-                    '</wps:Body>' +
-                    '</wps:Reference>' +
-                    '</wps:Input>' +
-                    
-					'<wps:Input>' +
-                    '<ows:Identifier>aggregationAttribute</ows:Identifier>' +
-                    '<wps:Data>' +
-                    '<wps:LiteralData>' + e.record.json[0] + '</wps:LiteralData>' +
-                    '</wps:Data>' +
-                    '</wps:Input>' +
-
-                    '<wps:Input>' +
-                    '<ows:Identifier>function</ows:Identifier>' +
-                    '<wps:Data>' +
-                    '<wps:LiteralData>Count</wps:LiteralData>' +
-                    '</wps:Data>' +
-                    '</wps:Input>' +
-
-                    '<wps:Input>' +
-                    '<ows:Identifier>function</ows:Identifier>' +
-                    '<wps:Data>' +
-                    '<wps:LiteralData>Average</wps:LiteralData>' +
-                    '</wps:Data>' +
-                    '</wps:Input>' +
-
-                    '<wps:Input>' +
-                    '<ows:Identifier>function</ows:Identifier>' +
-                    '<wps:Data>' +
-                    '<wps:LiteralData>Max</wps:LiteralData>' +
-                    '</wps:Data>' +
-                    '</wps:Input>' +
-
-                    '<wps:Input>' +
-                    '<ows:Identifier>function</ows:Identifier>' +
-                    '<wps:Data>' +
-                    '<wps:LiteralData>Median</wps:LiteralData>' +
-                    '</wps:Data>' +
-                    '</wps:Input>' +
-
-                    '<wps:Input>' +
-                    '<ows:Identifier>function</ows:Identifier>' +
-                    '<wps:Data>' +
-                    '<wps:LiteralData>Min</wps:LiteralData>' +
-                    '</wps:Data>' +
-                    '</wps:Input>' +
-
-                    '<wps:Input>' +
-                    '<ows:Identifier>function</ows:Identifier>' +
-                    '<wps:Data>' +
-                    '<wps:LiteralData>StdDev</wps:LiteralData>' +
-                    '</wps:Data>' +
-                    '</wps:Input>' +
-
-                    '<wps:Input>' +
-                    '<ows:Identifier>function</ows:Identifier>' +
-                    '<wps:Data>' +
-                    '<wps:LiteralData>Sum</wps:LiteralData>' +
-                    '</wps:Data>' +
-                    '</wps:Input>' +
-
-                    '<wps:Input>' +
-                    '<ows:Identifier>singlePass</ows:Identifier>' +
-                    '<wps:Data>' +
-                    '<wps:LiteralData>false</wps:LiteralData>' +
-                    '</wps:Data>' +
-                    '</wps:Input>' +
+                if ((!_this.layerRecord ) || (! _this.featureManager.target.layerSources[ _this.layerRecord.get('source') ] ) || (! _this.featureManager.target.layerSources[ _this.layerRecord.get('source') ].restUrl))
+								
+					Ext.MessageBox.show({
+						title : gxp.plugins.FeatureGrid.prototype.getFeatureInfoPanelFieldStatisticWindowTitle,
+						msg : gxp.plugins.FeatureGrid.prototype.statisticNotAvailableText,
+						buttons: Ext.MessageBox.OK,
+						minWidth: 300
+					  });
 					
-                    '</wps:DataInputs>' +
-                    '<wps:ResponseForm>' +
-                    '<wps:RawDataOutput mimeType="text/xml">' +
-                    '<ows:Identifier>result</ows:Identifier>' +
-                    '</wps:RawDataOutput>' +
-                    '</wps:ResponseForm>' +
-                    '</wps:Execute>'
-                    ,headers: {
-                      "Content-Type": "text/xml; subtype=gml/3.1.1"
-                    },
-                    callback: function(request){
-                      if(request.status == 200){
+				else {
+				
+				
+					var url = _this.featureManager.target.layerSources[ _this.layerRecord.get('source') ].restUrl.replace("rest", "wps");
 
-                        if(request.responseXML.firstChild.nodeName == 'AggregationResults'){
-                          var t = '';
-                          var responseArr = request.responseXML.firstChild.childNodes;
-                          for(var i = 0, len = responseArr.length; i<len; i++){
-                            t += _this.wpsLiterals[ responseArr[i].nodeName ] + ': ' + responseArr[i].firstChild.data + '<br/>';
-                          }
+					var req = OpenLayers.Request.POST({
+						url: url,
+						data: '<?xml version="1.0" encoding="UTF-8"?>' +
+						'<wps:Execute version="1.0.0" service="WPS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.opengis.net/wps/1.0.0" xmlns:wfs="http://www.opengis.net/wfs" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:gml="http://www.opengis.net/gml" xmlns:ogc="http://www.opengis.net/ogc" xmlns:wcs="http://www.opengis.net/wcs/1.1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsAll.xsd">' +
+						'<ows:Identifier>gs:Aggregate</ows:Identifier>' +
+						'<wps:DataInputs>' +
+						
+						'<wps:Input>' +
+						'<ows:Identifier>features</ows:Identifier>' +
+						'<wps:Reference mimeType="text/xml; subtype=wfs-collection/1.0" xlink:href="http://geoserver/wfs" method="POST">' +
+						'<wps:Body>' +
+						'<wfs:GetFeature service="WFS" version="1.0.0" outputFormat="GML2">' +
+						'<wfs:Query typeName="' +  _this.layerRecord.get('name') + '"/>' +
+						'</wfs:GetFeature>' +
+						'</wps:Body>' +
+						'</wps:Reference>' +
+						'</wps:Input>' +
+						
+						'<wps:Input>' +
+						'<ows:Identifier>aggregationAttribute</ows:Identifier>' +
+						'<wps:Data>' +
+						'<wps:LiteralData>' + e.record.json[0] + '</wps:LiteralData>' +
+						'</wps:Data>' +
+						'</wps:Input>' +
 
-                          Ext.MessageBox.show({
-                            title : _this.getFeatureInfoPanelFieldStatisticWindowTitle,
-                            msg : t,
-                            buttons: Ext.MessageBox.OK,
-                            minWidth: 300
-                          });
-                        } else {
-                          Ext.MessageBox.show({
-                            title : _this.getFeatureInfoPanelFieldStatisticWindowTitle,
-                            msg : _this.statisticNotAvailableText,
-                            buttons: Ext.MessageBox.OK,
-                            minWidth: 300
-                          });
-                        }
+						'<wps:Input>' +
+						'<ows:Identifier>function</ows:Identifier>' +
+						'<wps:Data>' +
+						'<wps:LiteralData>Count</wps:LiteralData>' +
+						'</wps:Data>' +
+						'</wps:Input>' +
 
-                      } else {
-                          Ext.MessageBox.show({
-                            title : _this.getFeatureInfoPanelFieldStatisticWindowTitle,
-                            msg : _this.statisticNotAvailableText,
-                            buttons: Ext.MessageBox.OK,
-                            minWidth: 300
-                          });
+						'<wps:Input>' +
+						'<ows:Identifier>function</ows:Identifier>' +
+						'<wps:Data>' +
+						'<wps:LiteralData>Average</wps:LiteralData>' +
+						'</wps:Data>' +
+						'</wps:Input>' +
 
-                      }
-                    },
-                    scope: this,
-                    proxy: _this.featureManager.target.proxy
-                });
+						'<wps:Input>' +
+						'<ows:Identifier>function</ows:Identifier>' +
+						'<wps:Data>' +
+						'<wps:LiteralData>Max</wps:LiteralData>' +
+						'</wps:Data>' +
+						'</wps:Input>' +
 
+						'<wps:Input>' +
+						'<ows:Identifier>function</ows:Identifier>' +
+						'<wps:Data>' +
+						'<wps:LiteralData>Median</wps:LiteralData>' +
+						'</wps:Data>' +
+						'</wps:Input>' +
+
+						'<wps:Input>' +
+						'<ows:Identifier>function</ows:Identifier>' +
+						'<wps:Data>' +
+						'<wps:LiteralData>Min</wps:LiteralData>' +
+						'</wps:Data>' +
+						'</wps:Input>' +
+
+						'<wps:Input>' +
+						'<ows:Identifier>function</ows:Identifier>' +
+						'<wps:Data>' +
+						'<wps:LiteralData>StdDev</wps:LiteralData>' +
+						'</wps:Data>' +
+						'</wps:Input>' +
+
+						'<wps:Input>' +
+						'<ows:Identifier>function</ows:Identifier>' +
+						'<wps:Data>' +
+						'<wps:LiteralData>Sum</wps:LiteralData>' +
+						'</wps:Data>' +
+						'</wps:Input>' +
+
+						'<wps:Input>' +
+						'<ows:Identifier>singlePass</ows:Identifier>' +
+						'<wps:Data>' +
+						'<wps:LiteralData>false</wps:LiteralData>' +
+						'</wps:Data>' +
+						'</wps:Input>' +
+						
+						'</wps:DataInputs>' +
+						'<wps:ResponseForm>' +
+						'<wps:RawDataOutput mimeType="text/xml">' +
+						'<ows:Identifier>result</ows:Identifier>' +
+						'</wps:RawDataOutput>' +
+						'</wps:ResponseForm>' +
+						'</wps:Execute>'
+						,headers: {
+						  "Content-Type": "text/xml; subtype=gml/3.1.1"
+						},
+						callback: function(request){
+						  if(request.status == 200){
+
+							if(request.responseXML.firstChild.nodeName == 'AggregationResults'){
+							  var t = '';
+							  var responseArr = request.responseXML.firstChild.childNodes;
+							  for(var i = 0, len = responseArr.length; i<len; i++){
+								t += _this.wpsLiterals[ responseArr[i].nodeName ] + ': ' + responseArr[i].firstChild.data + '<br/>';
+							  }
+
+							  Ext.MessageBox.show({
+								title : _this.getFeatureInfoPanelFieldStatisticWindowTitle,
+								msg : t,
+								buttons: Ext.MessageBox.OK,
+								minWidth: 300
+							  });
+							} else {
+							  Ext.MessageBox.show({
+								title : _this.getFeatureInfoPanelFieldStatisticWindowTitle,
+								msg : _this.statisticNotAvailableText,
+								buttons: Ext.MessageBox.OK,
+								minWidth: 300
+							  });
+							}
+
+						  } else {
+							  Ext.MessageBox.show({
+								title : _this.getFeatureInfoPanelFieldStatisticWindowTitle,
+								msg : _this.statisticNotAvailableText,
+								buttons: Ext.MessageBox.OK,
+								minWidth: 300
+							  });
+
+						  }
+						},
+						scope: this,
+						proxy: _this.featureManager.target.proxy
+					});
+
+				}
               }
           }]
         });
