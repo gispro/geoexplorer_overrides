@@ -470,7 +470,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
         var newSourceWindow = new gxp.NewSourceWindow({
             modal: true,
             listeners: {
-                "server-added": function(url, restUrl, titleCustom, icon) {
+                "server-added": function(url, restUrl, titleCustom, icon, version) {
 					if (newSourceWindow.getServiceIDX() === 0)          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 					{
 						var idx = sourceComboBox.getServiceIDX (titleCustom);
@@ -478,7 +478,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
 						{
 							newSourceWindow.setLoading();
                     
-							var conf = {url: url, restUrl: restUrl};
+							var conf = {url: url, restUrl: restUrl, version: version?version:undefined};
 							if(titleCustom){
 								conf.title = titleCustom;
 							}
@@ -528,7 +528,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
 							}
 							OpenLayers.Request.issue({
 								method: "POST",
-								url: "save",
+								url: OVROOT+"save",
 								async: true,
 								params:{
 								    service : "arcgis"   ,
@@ -572,7 +572,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
 								// send to server => write to file
 								OpenLayers.Request.issue({
 									method: "POST",
-									url: "save",
+									url: OVROOT+"save",
 									async: true,
 									params:{
 									    service : "rss"      ,
@@ -866,7 +866,6 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
                 source: source.id
             });
             if (record) {
-				record.data.rid = records[i].get("rid");
                 layer = record.getLayer();
                 layer.options.singleTile = true;
 				if (layer.maxExtent) {
