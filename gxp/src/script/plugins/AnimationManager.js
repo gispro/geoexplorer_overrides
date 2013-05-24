@@ -559,19 +559,23 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 		};
 		
 		handleClose = function (code) {
-			if (code===200) {
+			var anim = animationName.getValue();
+			if (code===200) {				
 				if (this.updateCallback) this.updateCallback.call();
 				this.capGrid.hide();
 				animationLayersPanel.getStore().removeAll(true);
 				animationLayersPanel.getView().refresh();
 				animationName.setValue("");
 				Ext.Msg.alert(this.saveText, this.saveSucceedText);				
+				gxp.plugins.Logger.log("Добавлена анимация " + anim, gxp.plugins.Logger.prototype.LOG_LEVEL_INFO);
 			}
 			else if (code==409) {
 				Ext.Msg.alert(this.saveText, this.doubledRecordText);
+				gxp.plugins.Logger.log("Ошибка при добавлении анимации " + anim + " - попытка записать под уже существующим идентификатором", gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_LOCAL_ERRORS);
 			}
 			else if (code==500) {
 				Ext.Msg.alert(this.saveText, this.saveFailedText);
+				gxp.plugins.Logger.log("Внутренняя ошибка сервера при добавлении анимации " + anim , gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_LOCAL_ERRORS);
 			}
 		};
 		
@@ -850,10 +854,10 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 			animStore.commitChanges();
 		}
 		
-        var newSourceWindow = new gxp.NewSourceWindow({
+		var newSourceWindow = new gxp.NewSourceWindow({
             modal: true,
             listeners: {
-                "server-added": function(url, restUrl, titleCustom, icon) {
+                "server-added": function(url, restUrl, titleCustom, icon, version) {
 					if (newSourceWindow.getServiceIDX() === 0)          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 					{
 						var idx = sourceComboBox.getServiceIDX (titleCustom);
@@ -861,7 +865,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 						{
 							newSourceWindow.setLoading();
                     
-							var conf = {url: url, restUrl: restUrl};
+							var conf = {url: url, restUrl: restUrl, version: version?version:undefined};
 							if(titleCustom){
 								conf.title = titleCustom;
 							}
@@ -911,7 +915,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 							}
 							OpenLayers.Request.issue({
 								method: "POST",
-								url: "save",
+								url: OVROOT+"save",
 								async: true,
 								params:{
 								    service : "arcgis"   ,
@@ -955,7 +959,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 								// send to server => write to file
 								OpenLayers.Request.issue({
 									method: "POST",
-									url: "save",
+									url: OVROOT+"save",
 									async: true,
 									params:{
 									    service : "rss"      ,
@@ -974,6 +978,8 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             }
         });
         
+		
+		
 		var items = {
             xtype: "container",
             layout:'border',

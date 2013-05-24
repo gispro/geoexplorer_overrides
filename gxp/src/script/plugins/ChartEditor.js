@@ -578,6 +578,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 		};
 		
 		handleClose = function (code) {
+			var chart = chartName.setValue;
 			if (code===200) {
 				if (this.updateCallback) this.updateCallback.call();
 				this.capGrid.hide();
@@ -585,12 +586,15 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 				chartLayersPanel.getView().refresh();
 				chartName.setValue("");
 				Ext.Msg.alert(this.saveText, this.saveSucceedText);				
+				gxp.plugins.Logger.log("Добавлен график " + anim, gxp.plugins.Logger.prototype.LOG_LEVEL_INFO);
 			}
 			else if (code==409) {
+				gxp.plugins.Logger.log("Ошибка при добавлении графика " + chart + " - попытка записать под уже существующим идентификатором", gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_LOCAL_ERRORS);
 				Ext.Msg.alert(this.saveText, this.doubledRecordText);
 			}
 			else if (code==500) {
 				Ext.Msg.alert(this.saveText, this.saveFailedText);
+				gxp.plugins.Logger.log("Внутренняя ошибка сервера при добавлении графика " + chart , gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_LOCAL_ERRORS);
 			}
 		};
 		
@@ -825,10 +829,11 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 			var parser = new GeoExt.PrickerParser("translate");			
 			parser.doOnParce(setComboBoxes, this);
 			
-			if (app.layerSources[Ext.getCmp("sourceComboBoxCharts").getValue()].url)			
+			if (app.layerSources[Ext.getCmp("sourceComboBoxCharts").getValue()].url)	{		
+				var url = app.layerSources[Ext.getCmp("sourceComboBoxCharts").getValue()].url.split(layer.split(":")[0])[0].replace("/wms","/")+"wfs"; 
 				OpenLayers.Request.issue({
 					method: "GET",
-					url: app.layerSources[Ext.getCmp("sourceComboBoxCharts").getValue()].url.split(layer.split(":")[0])[0]+"wfs",
+					url: url,
 					params:{
 						request: "describeFeatureType"
 						,typename : layer
@@ -836,14 +841,19 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 					callback: function(respond){
 						if(respond.status == 200){
 							parser.parseDescribeFeatureType([respond.responseXML]);
+							gxp.plugins.Logger.log("Данные об осях графика получены с сервера " + url , gxp.plugins.Logger.prototype.LOG_LEVEL_INFO);
 						}
 						else {
 							Ext.Msg.alert(this.errorText, this.wrongAxisRequest);
+							gxp.plugins.Logger.log("Внутренняя ошибка сервера при запросе осей графика с сервера " + url , gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_LOCAL_ERRORS);
 						}
 					}					
-				});
+				});			
+				gxp.plugins.Logger.log("Отправлен запрос на получение осей графика на сервер " + url , gxp.plugins.Logger.prototype.LOG_LEVEL_INFO);
+			}
 			else {
 				Ext.Msg.alert(gxp.plugins.ChartEditor.prototype.errorText, gxp.plugins.ChartEditor.prototype.wrongAxisRequest);
+				gxp.plugins.Logger.log("Внутренняя ошибка сервера при запросе осей графика с сервера " + url , gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_LOCAL_ERRORS);
 			}
 					
 		}
@@ -983,7 +993,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
         var newSourceWindow = new gxp.NewSourceWindow({
             modal: true,
             listeners: {
-                "server-added": function(url, restUrl, titleCustom, icon) {
+                "server-added": function(url, restUrl, titleCustom, icon, version) {
 					if (newSourceWindow.getServiceIDX() === 0)          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 					{
 						var idx = sourceComboBox.getServiceIDX (titleCustom);
@@ -991,7 +1001,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 						{
 							newSourceWindow.setLoading();
                     
-							var conf = {url: url, restUrl: restUrl};
+							var conf = {url: url, restUrl: restUrl, version: version?version:undefined};
 							if(titleCustom){
 								conf.title = titleCustom;
 							}
@@ -1041,7 +1051,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 							}
 							OpenLayers.Request.issue({
 								method: "POST",
-								url: "save",
+								url: OVROOT+"save",
 								async: true,
 								params:{
 								    service : "arcgis"   ,
@@ -1085,7 +1095,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 								// send to server => write to file
 								OpenLayers.Request.issue({
 									method: "POST",
-									url: "save",
+									url: OVROOT+"save",
 									async: true,
 									params:{
 									    service : "rss"      ,
