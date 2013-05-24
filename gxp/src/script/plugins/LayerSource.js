@@ -20,15 +20,15 @@
         this.target = target;
         this.createStore();
         if ( this.store ){
-          this.store.on('exception', function(a,b,c,d,e){ this.showMessageError(e);},this);
+          this.store.on('exception', function(a,b,c,d,e,f){ console.log(arguments); this.showMessageError(b,e,f);},this);
         }
     },
 
     //Added exception message
-    showMessageError: function(e) {
+    showMessageError: function(b,e,f) {
       Ext.MessageBox.show({
         title: this.errorMessageTitle,
-        msg: this.errorMessages[e.status],
+        msg: b==='response'?f:this.errorMessages[e.status],
         buttons: Ext.MessageBox.OK,
         icon: Ext.MessageBox.ERROR
       });
