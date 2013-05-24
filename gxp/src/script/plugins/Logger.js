@@ -27,9 +27,9 @@ Ext.namespace("gxp.plugins");
  */
 gxp.plugins.Logger = Ext.extend(gxp.plugins.Tool, {
     
-	LOG_LEVEL_INFO : 2, // выводятся абсолютно все сообщения (в том числе об успешных запросах)
-	LOG_LEVEL_NETWORK_LOCAL_ERRORS : 1, // выводятся сообщения о неверных запросах и внутренних ошибках приложения, не связанных с сетью
-	LOG_LEVEL_NETWORK_ERRORS : 0, // выводятся только сообщения о неверных запросах
+	LOG_LEVEL_INFO : 2, // сообщения об успешных запросах
+	LOG_LEVEL_NETWORK_LOCAL_ERRORS : 1, // все ошибки
+	//LOG_LEVEL_NETWORK_ERRORS : 0, // выводятся только сообщения о неверных запросах
 	
     /** api: ptype = gxp_logger */
     ptype: "gxp_logger",
@@ -90,9 +90,10 @@ gxp.plugins.Logger = Ext.extend(gxp.plugins.Tool, {
 					var levels = new Ext.data.ArrayStore({
 						fields: ["level", "description"],
 						data: [
+								[-1, "Без фильтрации"],
 								[gxp.plugins.Logger.prototype.LOG_LEVEL_INFO, "Информационные сообщения"],
 								[gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_LOCAL_ERRORS, "Ошибки приложения"],
-								[gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_ERRORS, "Ошибки получения данных"]
+								//[gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_ERRORS, "Ошибки получения данных"]
 						]
 					});				
 					
@@ -100,6 +101,7 @@ gxp.plugins.Logger = Ext.extend(gxp.plugins.Tool, {
 						id: "logFilterCombobox",
 						store: levels,
 						valueField: "level",
+						value: -1,
 						displayField: "description",
 						triggerAction: "all",						
 						mode: "local",
@@ -107,7 +109,8 @@ gxp.plugins.Logger = Ext.extend(gxp.plugins.Tool, {
 						listeners: {
 							select: function(combo, record, index)
 							{								
-								Ext.getCmp('logGrid').getStore().filter("level",filter.getValue());  // set selected layers filter
+								if (filter.getValue()==-1) Ext.getCmp('logGrid').getStore().clearFilter();
+								else Ext.getCmp('logGrid').getStore().filter("level",filter.getValue());  // set selected layers filter
 							}
 						}
 					});
@@ -118,7 +121,7 @@ gxp.plugins.Logger = Ext.extend(gxp.plugins.Tool, {
 						maximizable: true,
 						layout: 'fit',
 						tbar : {
-							items: [
+							items: [								
 								{
 									xtype: 'label',
 									html: 'Фильтр логирования:'
@@ -127,7 +130,29 @@ gxp.plugins.Logger = Ext.extend(gxp.plugins.Tool, {
 									xtype: 'tbspacer',
 									width: 5
 								},
-								filter
+								filter,
+								{
+									xtype: 'button',
+									text: 'Обновить',
+									onClick: function() {
+										Ext.getCmp('logGrid').getStore().removeAll();
+										Ext.getCmp('logGrid').getStore().add(new Ext.data.ArrayStore ({
+											fields: [
+											   {name: 'time'},
+											   {name: 'message'},
+											   {name: 'level'}
+											],
+											data: log
+										}).getRange());
+										if (filter.getValue()==-1) Ext.getCmp('logGrid').getStore().clearFilter();
+										else Ext.getCmp('logGrid').getStore().filter("level",filter.getValue());  // set selected layers filter
+									}
+								},
+								{
+									xtype: 'tbspacer',
+									width: 5
+								}
+									
 							]							
 						},
 						items: {
@@ -191,7 +216,7 @@ gxp.plugins.Logger.log = function(message, level) {
 }
 
 gxp.plugins.Logger.logRequest = function (config) {
-	var level = config.status == "failure" ? gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_ERRORS : gxp.plugins.Logger.prototype.LOG_LEVEL_ALL
+	var level = config.status == "failure" ? gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_LOCAL_ERRORS : gxp.plugins.Logger.prototype.LOG_LEVEL_INFO
 	var date = new Date();
 	var message = config.url;
 	if (config.url.indexOf("etCapabilities")+1) {
