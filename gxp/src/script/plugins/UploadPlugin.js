@@ -50,6 +50,7 @@ gxp.plugins.UploadPlugin = Ext.extend(gxp.plugins.Tool, {
         var panel = new gxp.LayerUploadPanel(Ext.apply({
 			url: this.target.uploadUrl,
 			width: 350,
+			renderTo: Ext.getBody(),
 			border: false,
 			bodyStyle: "padding: 10px 10px 0 10px;",
 			frame: true,
@@ -58,7 +59,8 @@ gxp.plugins.UploadPlugin = Ext.extend(gxp.plugins.Tool, {
 				anchor: "95%",
 				allowBlank: false,
 				msgTarget: "side"
-			}
+			},
+			scope : this
 		}));
 		
 		this.window = new Ext.Window({

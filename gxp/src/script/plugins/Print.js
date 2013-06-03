@@ -109,7 +109,7 @@ gxp.plugins.Print = Ext.extend(gxp.plugins.Tool, {
                     },
                     print: function() {
                         try {
-                            printWindow.close();
+                            printWindow.close();							
                         } catch (err) {
                             // TODO: improve destroy
                         }
