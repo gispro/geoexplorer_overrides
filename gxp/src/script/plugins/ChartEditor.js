@@ -105,7 +105,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
      *  ``String``
      *  Text for an error message when name wasn't entered (i18n).
      */
-	nameRequiredErrorText: "Please enter animaion's name",
+	nameRequiredErrorText: "Please enter chart's title",
 		
 	errorText: "Error",
 	
@@ -586,7 +586,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 				chartLayersPanel.getView().refresh();
 				chartName.setValue("");
 				Ext.Msg.alert(this.saveText, this.saveSucceedText);				
-				gxp.plugins.Logger.log("Добавлен график " + anim, gxp.plugins.Logger.prototype.LOG_LEVEL_INFO);
+				gxp.plugins.Logger.log("Добавлен график " + chart, gxp.plugins.Logger.prototype.LOG_LEVEL_INFO);
 			}
 			else if (code==409) {
 				gxp.plugins.Logger.log("Ошибка при добавлении графика " + chart + " - попытка записать под уже существующим идентификатором", gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_LOCAL_ERRORS);

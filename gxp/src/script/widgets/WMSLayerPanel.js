@@ -305,7 +305,7 @@
 						'<wps:Reference mimeType="text/xml; subtype=wfs-collection/1.0" xlink:href="http://geoserver/wfs" method="POST">' +
 						'<wps:Body>' +
 						'<wfs:GetFeature service="WFS" version="1.0.0" outputFormat="GML2">' +
-						'<wfs:Query typeName="' +  _this.layerRecord.get('name') + '"/>' +
+						'<wfs:Query typeName="' +  _this.featureManager.target.layerSources[_this.layerRecord.data.source].describeLayerStore.getRange().filter(function(el) { return el.get('layerName') == _this.layerRecord.get('name') })[0].get('typeName') + '"/>' +
 						'</wfs:GetFeature>' +
 						'</wps:Body>' +
 						'</wps:Reference>' +
