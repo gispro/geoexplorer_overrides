@@ -97,7 +97,7 @@
               );
             }
 
-            var fileFormats = this.getFileFormats(config.source);
+            var fileFormats = config.group == 'background' ? [] : this.getFileFormats(config.source);
 
             // data for the new record
             var data = Ext.applyIf({
