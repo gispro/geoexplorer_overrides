@@ -928,7 +928,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 				return false;
 			}
 			
-			var conf = {url: url, restUrl: restUrl};
+			var conf = {url: url, restUrl: restUrl, version: '1.3.0'};
 			if (title) {
 				conf.title = title;
 			}
