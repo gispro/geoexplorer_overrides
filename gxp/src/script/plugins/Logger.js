@@ -219,56 +219,67 @@ gxp.plugins.Logger.logRequest = function (config) {
 	var level = config.status == "failure" ? gxp.plugins.Logger.prototype.LOG_LEVEL_NETWORK_LOCAL_ERRORS : gxp.plugins.Logger.prototype.LOG_LEVEL_INFO
 	var date = new Date();
 	var message = config.url;
+	var serverError = "";
+	if (config.status=="failure" && config.httpStatus) {
+		serverError = "(Ответ сервера: "+config.httpStatus+": " + config.statusText + ")";
+	}
+	
 	if (config.url.indexOf("etCapabilities")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на информацию о слоях к серверу " + config.url;
 		if (config.status=="success") message =  "Информация о слоях получена от сервера " + config.url;
-		if (config.status=="failure") message =  "Ошибка! Не получена информация о слоях от сервера " + config.url;
+		if (config.status=="failure") message =  "Ошибка! Не получена информация о слоях от сервера " + config.url + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("getMap")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на получение участка карты к серверу " + config.url;
 		if (config.status=="success") message =  "Участок карты получен от сервера " + config.url;
-		if (config.status=="failure") message =  "Ошибка! Участок карты не получен от сервера " + config.url;
+		if (config.status=="failure") message =  "Ошибка! Участок карты не получен от сервера " + config.url + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("getFeatureInfo")+1) {
 		if (config.status=="start") message =   "Отправлен запрос на информацию в точке $координаты к серверу " + config.url;
 		if (config.status=="success") message =   "Информация в точке $координаты получена от сервера $url " + config.url;
-		if (config.status=="failure") message =   "Ошибка! Информация в точке $координаты не получена от сервера " + config.url;
+		if (config.status=="failure") message =   "Ошибка! Информация в точке $координаты не получена от сервера " + config.url + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("getLegendGraphic")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на информацию о легенде к серверу " + config.url;
 		if (config.status=="success") message =  "Информация о легенде получена от сервера " + config.url;
-		if (config.status=="failure") message =  "Ошибка! Не получена информация о легенде от сервера " + config.url;
+		if (config.status=="failure") message =  "Ошибка! Не получена информация о легенде от сервера " + config.url + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("charts.js")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на получение списка сохраненных графиков";
 		if (config.status=="success") message =  "Список сохраненных графиков получен от сервера";
-		if (config.status=="failure") message =  "Ошибка! Список сохраненных графиков не получен от сервера";
+		if (config.status=="failure") message =  "Ошибка! Список сохраненных графиков не получен от сервера" + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("animation.js")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на получение списка сохраненных анимаций";
 		if (config.status=="success") message =  "Список сохраненных анимаций получен от сервера";
-		if (config.status=="failure") message =  "Ошибка! Список сохраненных анимаций не получен от сервера";
+		if (config.status=="failure") message =  "Ошибка! Список сохраненных анимаций не получен от сервера" + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("wms.js")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на получение списка сохраненных сервисов WMS";
 		if (config.status=="success") message =  "Список сохраненных сервисов WMS получен от сервера";
-		if (config.status=="failure") message =  "Ошибка! Список сохраненных сервисов WMS не получен от сервера";
+		if (config.status=="failure") message =  "Ошибка! Список сохраненных сервисов WMS не получен от сервера" + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("arcgis")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на получение списка сохраненных сервисов ArcGIS";
 		if (config.status=="success") message =  "Список сохраненных сервисов ArcGIS получен от сервера";
-		if (config.status=="failure") message =  "Ошибка! Список сохраненных сервисов ArcGIS не получен от сервера";
+		if (config.status=="failure") message =  "Ошибка! Список сохраненных сервисов ArcGIS не получен от сервера" + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("rss")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на получение списка сохраненных сервисов RSS";
 		if (config.status=="success") message =  "Список сохраненных сервисов RSS получен от сервера";
-		if (config.status=="failure") message =  "Ошибка! Список сохраненных сервисов RSS не получен от сервера";
+		if (config.status=="failure") message =  "Ошибка! Список сохраненных сервисов RSS не получен от сервера" + (serverError ? ". " + serverError : "") ;
 	}else if (config.url.indexOf("aqua")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на получение списка акваторий";
 		if (config.status=="success") message =  "Список акваторий получен от сервера";
-		if (config.status=="failure") message =  "Ошибка! Список акваторий не получен от сервера";
+		if (config.status=="failure") message =  "Ошибка! Список акваторий не получен от сервера" + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("maps")+1) { // рубрикатор, таблица toc
 		if (config.status=="start") message =  "Отправлен запрос на получение данных рубрикатора";
 		if (config.status=="success") message =  "Данные рубрикатора получены от сервера";
-		if (config.status=="failure") message =  "Ошибка! Данные рубрикатора не получены от сервера";
+		if (config.status=="failure") message =  "Ошибка! Данные рубрикатора не получены от сервера" + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("getFeature")+1) { // WFS выборка
 		if (config.status=="start") message =   "Отправлен запрос на выборку объектов к серверу " + config.url;
 		if (config.status=="success") message =   "Выборка объектов получена от сервера $url " + config.url;
-		if (config.status=="failure") message =   "Ошибка! Выборка объектов не получена от сервера " + config.url;
-	} else if (config.url.indexOf("???")+1) { // WFS-T
-		
+		if (config.status=="failure") message =   "Ошибка! Выборка объектов не получена от сервера " + config.url + (serverError ? ". " + serverError : "") ;
+	}  else if (config.url.indexOf("styles")+1) { // WFS выборка
+		if (config.status=="start") message =   "Отправлен запрос на получение стилей к серверу " + config.url;
+		if (config.status=="success") message =   "Стили получены получены от сервера $url " + config.url;
+		if (config.status=="failure") message =   "Ошибка! Стили не получены от сервера " + config.url + (serverError ? ". " + serverError : "") ;
+	} else {
+		if (config.status=="start") message =   "Отправлен запрос к серверу " + config.url;
+		if (config.status=="success") message =   "Данные получены от сервера $url " + config.url;
+		if (config.status=="failure") message =   "Ошибка! Данные не получены от сервера " + config.url + (serverError ? ". " + serverError : "") ;
 	}
 	log.push ([ date, message, level]);
 }
