@@ -209,8 +209,63 @@
             queryableFields: record.get('queryableFields'),
             singleTile: record.get('singleTile')
         });
-    }
+    },
 
+	//OVERRIDED version
+	/** api: method[getSchema]
+     *  :arg rec: ``GeoExt.data.LayerRecord`` the WMS layer to issue a WFS
+     *      DescribeFeatureType request for
+     *  :arg callback: ``Function`` Callback function. Will be called with
+     *      a ``GeoExt.data.AttributeStore`` containing the schema as first
+     *      argument, or false if the WMS does not support DescribeLayer or the
+     *      layer is not associated with a WFS feature type.
+     *  :arg scope: ``Object`` Optional scope for the callback.
+     *
+     *  Gets the schema for a layer of this source, if the layer is a feature
+     *  layer.
+     */
+    getSchema: function(rec, callback, scope) {
+        if (!this.schemaCache) {
+            this.schemaCache = {};
+        }
+        this.describeLayer(rec, function(r) {
+            if (r && r.get("owsType") == "WFS") {
+                var typeName = r.get("typeName");
+                var schema = this.schemaCache[typeName];
+                if (schema) {
+                    if (schema.getCount() == 0) {
+                        schema.on("load", function() {
+                            callback.call(scope, schema);
+                        }, this, {single: true});
+                    } else {
+                        callback.call(scope, schema);
+                    }
+                } else {
+                    schema = new GeoExt.data.AttributeStore({
+                        url: r.get("owsURL"),
+                        baseParams: {
+                            SERVICE: "WFS",
+                            //TODO should get version from WFS GetCapabilities
+                            VERSION: "1.3.0",
+                            REQUEST: "DescribeFeatureType",
+                            TYPENAME: typeName
+                        },
+                        autoLoad: true,
+                        listeners: {
+                            "load": function() {
+                                callback.call(scope, schema);
+                            },
+                            scope: this
+                        }
+                    });
+                    this.schemaCache[typeName] = schema;
+                }
+            } else {
+                callback.call(scope, false);
+            }
+        }, this);
+   },
+	
   });
 
 })();
