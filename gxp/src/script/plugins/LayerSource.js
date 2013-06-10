@@ -28,7 +28,7 @@
     showMessageError: function(b,e,f) {
       Ext.MessageBox.show({
         title: this.errorMessageTitle,
-        msg: b==='response'?f:this.errorMessages[e.status],
+        msg: b==='response'?f||this.errorMessages[e.status]:this.errorMessages[e.status],
         buttons: Ext.MessageBox.OK,
         icon: Ext.MessageBox.ERROR
       });
