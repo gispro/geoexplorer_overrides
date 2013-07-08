@@ -92,7 +92,7 @@
                       visibility: ("visibility" in config) ? config.visibility : true,
                       opacity: ("opacity" in config) ? config.opacity : 1,
                       buffer: ("buffer" in config) ? config.buffer : 1,
-                      singleTile: config.group!="background"
+                      singleTile: false//config.group!="background"
                   }
               );
             }
@@ -246,7 +246,7 @@
                         baseParams: {
                             SERVICE: "WFS",
                             //TODO should get version from WFS GetCapabilities
-                            VERSION: "1.3.0",
+                            VERSION: "1.1.1",
                             REQUEST: "DescribeFeatureType",
                             TYPENAME: typeName
                         },

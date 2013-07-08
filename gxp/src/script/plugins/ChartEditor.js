@@ -558,7 +558,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 		sendData = function (record, scope) {	// commit 
 			OpenLayers.Request.issue({
 				method: "GET",
-				url: "save",
+				url: OVROOT + "save",
 				async: true,
 				params:{
 					service : "charts",
@@ -833,7 +833,7 @@ gxp.plugins.ChartEditor = Ext.extend(gxp.plugins.Tool, {
 				var url = app.layerSources[Ext.getCmp("sourceComboBoxCharts").getValue()].url.split(layer.split(":")[0])[0].replace("/wms","/")+"wfs"; 
 				OpenLayers.Request.issue({
 					method: "GET",
-					url: url,
+					url: OVROOT + url,
 					params:{
 						request: "describeFeatureType"
 						,typename : layer

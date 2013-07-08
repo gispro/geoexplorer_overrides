@@ -539,7 +539,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 		sendData = function (record, scope) {	// commit 
 			OpenLayers.Request.issue({
 				method: "GET",
-				url: "save",
+				url: OVROOT + "save",
 				async: true,
 				params:{
 					service : "animation",

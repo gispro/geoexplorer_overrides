@@ -471,7 +471,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             modal: true,
             listeners: {
                 "server-added": function(url, restUrl, titleCustom, icon, version) {
-					if (newSourceWindow.getServiceIDX() === 0)          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					if (newSourceWindow.getServiceIDX() === 'WMS')          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 					{
 						var idx = sourceComboBox.getServiceIDX (titleCustom);
 						if (idx === -1)
@@ -507,7 +507,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
 							sourceComboBox.setSelection (idx);
 							sourceComboBox.onSelect(sourceComboBox.getServiceRecord(idx), idx);
 						}
-					} else if (newSourceWindow.getServiceIDX() === 1) {
+					} else if (newSourceWindow.getServiceIDX() === 'ArcGIS') {
 						if (!sourceComboBox.isServiceLoaded(titleCustom))
 						{
 							arcgisStore.reader.jsonData.arcgis.servers.push({'title': titleCustom, 'url' : url});
@@ -537,7 +537,7 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
 								}
 							});
 						}
-					} else if (newSourceWindow.getServiceIDX() === 2) {
+					} else if (newSourceWindow.getServiceIDX() === "GeoRSS") {
 //						console.log ('newSourceWindow.listeners : RSS - titleCustom = ' + titleCustom + ', url = ' + url);
 						var idx = sourceComboBox.getServiceIDX ('', 'rss');
 						if (idx >= 0)

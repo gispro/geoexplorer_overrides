@@ -234,7 +234,7 @@ gxp.plugins.AnimationGrid = Ext.extend(gxp.plugins.Tool, {
 		var deleteAnimation = function  (animId) {
 			OpenLayers.Request.issue({
 				method: "GET",
-				url: "save",
+				url: OVROOT + "save",
 				async: true,
 				params:{
 					service : "animation",

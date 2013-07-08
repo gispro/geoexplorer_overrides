@@ -267,7 +267,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 		var deleteChart = function  (chartId) {
 			OpenLayers.Request.issue({
 				method: "GET",
-				url: "save",
+				url: OVROOT + "save",
 				async: true,
 				params:{
 					service : "charts",
@@ -335,7 +335,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 		var storeSetDefault = function (chartId) {
 			OpenLayers.Request.issue({
 				method: "GET",
-				url: "save",
+				url: OVROOT + "save",
 				async: true,
 				params:{
 					service : "charts",

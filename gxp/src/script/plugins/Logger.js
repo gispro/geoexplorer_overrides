@@ -166,7 +166,7 @@ gxp.plugins.Logger = Ext.extend(gxp.plugins.Tool, {
 									header     : 'Время',									
 									sortable : true,
 									dataIndex: 'time',
-									renderer: Ext.util.Format.dateRenderer('H:m:s'),
+									renderer: Ext.util.Format.dateRenderer('H:i:s'),
 									id: 'log-time-column'
 								}, 
 								{
@@ -240,10 +240,14 @@ gxp.plugins.Logger.logRequest = function (config) {
 		if (config.status=="start") message =  "Отправлен запрос на информацию о легенде к серверу " + config.url;
 		if (config.status=="success") message =  "Информация о легенде получена от сервера " + config.url;
 		if (config.status=="failure") message =  "Ошибка! Не получена информация о легенде от сервера " + config.url + (serverError ? ". " + serverError : "") ;
-	} else if (config.url.indexOf("charts.js")+1) {
+	} else if (config.url.indexOf("charts.json?mode=items")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на получение списка сохраненных графиков";
 		if (config.status=="success") message =  "Список сохраненных графиков получен от сервера";
 		if (config.status=="failure") message =  "Ошибка! Список сохраненных графиков не получен от сервера" + (serverError ? ". " + serverError : "") ;
+	} else if (config.url.indexOf("charts.json?mode=root")+1) {
+		if (config.status=="start") message =  "Отправлен запрос на получение метаданных графиков";
+		if (config.status=="success") message =  "Метаданные графиков получены от сервера";
+		if (config.status=="failure") message =  "Ошибка! Метаданные графиков не получены от сервера" + (serverError ? ". " + serverError : "") ;
 	} else if (config.url.indexOf("animation.js")+1) {
 		if (config.status=="start") message =  "Отправлен запрос на получение списка сохраненных анимаций";
 		if (config.status=="success") message =  "Список сохраненных анимаций получен от сервера";

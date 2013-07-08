@@ -1,7 +1,19 @@
 (function() {
   Ext.apply(gxp.plugins.WMSCSource.prototype, {
 
-    //OVERRIDED reprojection used
+    //OVERRIDED TILED:true removed
+	/** private: method[constructor]
+     */
+    constructor: function(config) {
+        config.baseParams = {
+            SERVICE: "WMS",
+            REQUEST: "GetCapabilities"
+        };
+        gxp.plugins.WMSCSource.superclass.constructor.apply(this, arguments); 
+        this.format = new OpenLayers.Format.WMSCapabilities({profile: 'WMSC'});
+    },
+	
+	//OVERRIDED reprojection used
     /** api: method[createLayerRecord]
      *  :arg config:  ``Object``  The application config for this layer.
      *  :returns: ``GeoExt.data.LayerRecord``
@@ -46,7 +58,7 @@
                 }
 
             }
-            layer.params.TILED = (config.cached !== false) && true;
+            layer.params.TILED = true;//(config.cached !== false) && true;
 
             // add additional fields
             var fields = [
