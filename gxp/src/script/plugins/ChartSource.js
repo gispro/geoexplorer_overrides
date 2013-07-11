@@ -4,9 +4,10 @@ Ext.namespace("gxp.plugins");
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var chartStore = new Ext.data.JsonStore({ 
-	url       : OVROOT+'charts.json?mode=items',
+	//url       : OVROOT+'charts.json?mode=items',
+	url       : OVROOT+'services?service=charts&action=getList&mode=items',
 	root      : 'charts',
-	fields    : [ 'name', 'chartId', 'url', 'x_axis', 'y_axis', 'isDefault', 'layers'],
+	fields    : [ 'title', 'chart_id', 'url', 'x_axis', 'y_axis', 'is_default', 'layers'],
 	listeners :
     {
    		load : function(options)
@@ -21,7 +22,8 @@ var chartStore = new Ext.data.JsonStore({
 });
 
 var chartRoot = new Ext.data.JsonStore({ 
-	url       : OVROOT+'charts.json?mode=root',
+	//url       : OVROOT+'charts.json?mode=root',
+	url       : OVROOT+'services?service=charts&action=getList&mode=root',
 	fields    : [ 'charts', 'lastUpdate'],
 	listeners :
     {

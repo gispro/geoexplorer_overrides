@@ -321,7 +321,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 			var source = new gxp.plugins.AnimationSource();
 			var store = source.getLayersStore();
 			store.each(function(rec) {
-				if(rec.get("animId")==layerId){
+				if(rec.get("anim_id")==layerId){
 					Ext.getCmp("animationName").setValue(rec.get("title"));
 					valid = setSource(rec, scope);										
 				}
@@ -537,7 +537,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 		}
 				
 		sendData = function (record, scope) {	// commit 
-			OpenLayers.Request.issue({
+			/*OpenLayers.Request.issue({
 				method: "GET",
 				url: OVROOT + "save",
 				async: true,
@@ -545,11 +545,34 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 					service : "animation",
 					action  : scope.layerId ? "update" : "add",
 					title   : record.title,
-					animId  : record.animId,
+					anim_id  : record.anim_id,
 					url   	: record.url+"?service=WMS&request=GetMap",
 					x_axis  : record.x_axis,
 					layers  : record.layers,
 					owner   : record.owner
+				},
+				callback: function(request) 
+				{					
+					handleClose.call(scope||this, request.status, scope);
+				}					
+			});*/
+			//"anim_id", " url", " title", " layers", " x_axis", " user_created", " user_modified", "date_created", "date_modified"
+			var jsondata = {
+				title   : record.title,
+				url   	: record.url+"?service=WMS&request=GetMap",
+				x_axis  : record.x_axis,
+				layers  : record.layers,
+				owner   : record.owner
+			};
+			scope.layerId && (jsondata.anim_id = record.anim_id);
+			OpenLayers.Request.issue({
+				method: "POST",
+				url: OVROOT + "services",
+				async: true,
+				params:{
+					service : "animation",
+					action  : scope.layerId ? "update" : "insert",
+					data: JSON.stringify(jsondata),
 				},
 				callback: function(request) 
 				{					
@@ -622,7 +645,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 			var record = {
 				owner: "Администратор",
 				url: scope.target.layerSources[sourceComboBox.getValue()].url,
-				animId: scope.layerId ? scope.layerId : Date.now(),
+				anim_id: scope.layerId ? scope.layerId : Date.now(),
 				title: animationName.getValue(),	
 				x_axis: axisArr,
 				layers: layersArr
@@ -858,7 +881,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
             modal: true,
             listeners: {
                 "server-added": function(url, restUrl, titleCustom, icon, version) {
-					if (newSourceWindow.getServiceIDX() === 0)          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					if (newSourceWindow.getServiceIDX() === "WMS")          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 					{
 						var idx = sourceComboBox.getServiceIDX (titleCustom);
 						if (idx === -1)
@@ -894,7 +917,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 							sourceComboBox.setSelection (idx);
 							sourceComboBox.onSelect(sourceComboBox.getServiceRecord(idx), idx);
 						}
-					} else if (newSourceWindow.getServiceIDX() === 1) {
+					} else if (newSourceWindow.getServiceIDX() === "ArcGIS") {
 						if (!sourceComboBox.isServiceLoaded(titleCustom))
 						{
 							arcgisStore.reader.jsonData.arcgis.servers.push({'title': titleCustom, 'url' : url});
@@ -924,7 +947,7 @@ gxp.plugins.AnimationManager = Ext.extend(gxp.plugins.Tool, {
 								}
 							});
 						}
-					} else if (newSourceWindow.getServiceIDX() === 2) {
+					} else if (newSourceWindow.getServiceIDX() === "RSS") {
 //						console.log ('newSourceWindow.listeners : RSS - titleCustom = ' + titleCustom + ', url = ' + url);
 						var idx = sourceComboBox.getServiceIDX ('', 'rss');
 						if (idx >= 0)

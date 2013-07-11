@@ -160,7 +160,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
         var chartGridPanel = new Ext.grid.GridPanel({
             id: "chartGridPanel",
 			store: chartStore,
-			fields: ['name', 'url', 'isDefault'],
+			fields: ['name', 'url', 'is_default'],
             autoScroll: true,
             flex: 1,
 			//region: "west",
@@ -170,20 +170,20 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 			setDefault : function(rowIdx) { 
 				for(var index=0; index<chartStore.data.items.length; index++) 
 				{ 
-					if(chartStore.data.items[index].data.isDefault) 
+					if(chartStore.data.items[index].data.is_default) 
 						{							
-							chartStore.data.items[index].set('isDefault',false);    
+							chartStore.data.items[index].set('is_default',false);    
 						}
 				} 
-				chartStore.data.items[rowIdx].set('isDefault',true); 				
-				Ext.getCmp("chartGridPanel").editedChartId = chartStore.data.items[rowIdx].get('chartId');
+				chartStore.data.items[rowIdx].set('is_default',true); 				
+				Ext.getCmp("chartGridPanel").editedChartId = chartStore.data.items[rowIdx].get('chart_id');
 				storeSetDefault(Ext.getCmp("chartGridPanel").editedChartId);
 			} ,
-			//fields    : [ {name: 'name', mapping: 'owner'}, 'chartId', 'url', 'x_axis', 'y_axis', 'isDefault'],
+			//fields    : [ {name: 'name', mapping: 'owner'}, 'chart_id', 'url', 'x_axis', 'y_axis', 'is_default'],
             colModel: new Ext.grid.ColumnModel([
-                {id: "name", header: this.chartTitleText, dataIndex: "name", sortable: true, width: 200},
+                {id: "name", header: this.chartTitleText, dataIndex: "title", sortable: true, width: 200},
 				{id: "url", header: this.serviceURLText, dataIndex: "url", sortable: false},
-				{id: "isDefault", header: this.defaultUseText, dataIndex: "isDefault", sortable: false, width: 200,
+				{id: "is_default", header: this.defaultUseText, dataIndex: "is_default", sortable: false, width: 200,
 					constructor : function(config){ 
 						this.callParent(arguments); 
 						if (this.rowspan) { 
@@ -195,7 +195,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 					menuDisabled: true, 
 					renderer: function(value, metaData, record, rowIdx, colIdx, store) { 
 						var checked = "";
-						if (record.data.isDefault) {checked="checked=true"}
+						if (record.data.is_default) {checked="checked=true"}
 						return '<input '+ checked + ' onchange=Ext.getCmp("chartGridPanel").setDefault('+rowIdx+') type=radio name=def>';
 					} 
 				},				
@@ -209,7 +209,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 								tooltip: this.editBtnText,
 								handler: function(grid, rowIndex, colIndex) {
 									var rec = grid.getStore().getAt(rowIndex);
-									editChart(rec.get("chartId"));																		
+									editChart(rec.get("chart_id"));																		
 								}
 							},
 							{
@@ -218,7 +218,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 								scope: this,
 								handler: function(grid, rowIndex, colIndex) {
 									var rec = grid.getStore().getAt(rowIndex);
-									if (!rec.data.isDefault) {
+									if (!rec.data.is_default) {
 										askForDelete(rec, this);
 									} else {
 										Ext.Msg.alert(this.deleteErrorHeader, this.deleteErrorText);
@@ -232,7 +232,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 				afterrender: function() {
 					chartStore.on('load', function () {
 						for (var index=0; index<chartStore.getCount(); index++){
-							if (chartStore.data.items[index].data.isDefault)
+							if (chartStore.data.items[index].data.is_default)
 								Ext.getCmp("chartGridPanel").startChartId = chartStore.data.items[index].data.chartId;
 						}
 					});
@@ -258,14 +258,14 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 				},
 				fn: function (btn){
 					if(btn=='yes'){     
-						deleteChart(rec.get("chartId"));
+						deleteChart(rec.get("chart_id"));
 					}
 				}
 			});
 		};
 		
 		var deleteChart = function  (chartId) {
-			OpenLayers.Request.issue({
+			/*OpenLayers.Request.issue({
 				method: "GET",
 				url: OVROOT + "save",
 				async: true,
@@ -273,6 +273,20 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 					service : "charts",
 					action  : "remove",
 					chartId  : chartId
+				},
+				callback: function(request) 
+				{					
+					refreshGrid();
+				}					
+			});*/
+			OpenLayers.Request.issue({
+				method: "GET",
+				url: OVROOT + "services",
+				async: true,
+				params:{
+					service  : "charts",
+					action   : "remove",
+					chart_id : chartId
 				},
 				callback: function(request) 
 				{					
@@ -333,7 +347,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
         ];
              
 		var storeSetDefault = function (chartId) {
-			OpenLayers.Request.issue({
+			/*OpenLayers.Request.issue({
 				method: "GET",
 				url: OVROOT + "save",
 				async: true,
@@ -341,6 +355,20 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 					service : "charts",
 					action  : "setDefault",
 					chartId : chartId
+				},
+				callback: function(resp) 
+				{					
+					var str = resp;
+				}					
+			});*/
+			OpenLayers.Request.issue({
+				method: "GET",
+				url: OVROOT + "services",
+				async: true,
+				params:{
+					service : "charts",
+					action  : "updateDefault",
+					chart_id : chartId
 				},
 				callback: function(resp) 
 				{					
@@ -382,7 +410,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
             extent, record, layer;
         for (var i=0, ii=records.length; i<ii; ++i) {
             record = source.createLayerRecord({
-                name: records[i].get("name"),
+                name: records[i].get("title"),
                 source: source.id
             });
             if (record) {

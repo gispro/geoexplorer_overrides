@@ -188,7 +188,7 @@ gxp.plugins.AnimationGrid = Ext.extend(gxp.plugins.Tool, {
 								tooltip: this.editBtnText,
 								handler: function(grid, rowIndex, colIndex) {
 									var rec = grid.getStore().getAt(rowIndex);
-									editAnimation(rec.get("animId"));																		
+									editAnimation(rec.get("anim_id"));																		
 								}
 							},
 							{
@@ -225,21 +225,35 @@ gxp.plugins.AnimationGrid = Ext.extend(gxp.plugins.Tool, {
 				},
 				fn: function (btn){
 					if(btn=='yes'){     
-						deleteAnimation(rec.get("animId"));
+						deleteAnimation(rec.get("anim_id"));
 					}
 				}
 			});
 		};
 		
-		var deleteAnimation = function  (animId) {
-			OpenLayers.Request.issue({
+		var deleteAnimation = function  (anim_id) {
+			/*OpenLayers.Request.issue({
 				method: "GET",
 				url: OVROOT + "save",
 				async: true,
 				params:{
 					service : "animation",
 					action  : "remove",
-					animId  : animId
+					anim_id  : anim_id
+				},
+				callback: function(request) 
+				{					
+					refreshGrid();
+				}					
+			});*/
+			OpenLayers.Request.issue({
+				method: "GET",
+				url: OVROOT + "services",
+				async: true,
+				params:{
+					service : "animation",
+					action  : "remove",
+					anim_id  : anim_id
 				},
 				callback: function(request) 
 				{					

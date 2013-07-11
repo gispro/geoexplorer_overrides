@@ -268,7 +268,7 @@ gxp.plugins.Logger.logRequest = function (config) {
 		if (config.status=="start") message =  "Отправлен запрос на получение списка акваторий";
 		if (config.status=="success") message =  "Список акваторий получен от сервера";
 		if (config.status=="failure") message =  "Ошибка! Список акваторий не получен от сервера" + (serverError ? ". " + serverError : "") ;
-	} else if (config.url.indexOf("maps")+1) { // рубрикатор, таблица toc
+	} else if (config.url.indexOf("rubricator")+1) { // рубрикатор, таблица toc
 		if (config.status=="start") message =  "Отправлен запрос на получение данных рубрикатора";
 		if (config.status=="success") message =  "Данные рубрикатора получены от сервера";
 		if (config.status=="failure") message =  "Ошибка! Данные рубрикатора не получены от сервера" + (serverError ? ". " + serverError : "") ;
