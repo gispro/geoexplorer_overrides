@@ -209,11 +209,11 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
 		data.push(['rss'      , 'RSS'     ]);
 		data.push(['animation', 'Анимация']);
 		// ArcGIS
-		if (arcgisStore && arcgisStore.reader.jsonData.arcgis.servers.length > 0)
+		if (arcgisStore && arcgisStore.reader.jsonData.servers.length > 0)
 		{
-			for (var idx=0; idx < arcgisStore.reader.jsonData.arcgis.servers.length; ++idx) 
+			for (var idx=0; idx < arcgisStore.reader.jsonData.servers.length; ++idx) 
 			{
-				title = arcgisStore.reader.jsonData.arcgis.servers[idx].title;
+				title = arcgisStore.reader.jsonData.servers[idx].title;
 				data.push(['arcgis93_' + idx, title]);
 //				console.log ('arcgis93_' + idx + ', ' + title);
 			}
@@ -510,9 +510,9 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
 					} else if (newSourceWindow.getServiceIDX() === 'ArcGIS') {
 						if (!sourceComboBox.isServiceLoaded(titleCustom))
 						{
-							arcgisStore.reader.jsonData.arcgis.servers.push({'title': titleCustom, 'url' : url});
+							arcgisStore.reader.jsonData.servers.push({'title': titleCustom, 'url' : url});
 							var record = new sources.recordType({
-								id: 'arcgis93_' + arcgisStore.reader.jsonData.arcgis.servers.length,
+								id: 'arcgis93_' + arcgisStore.reader.jsonData.servers.length,
 								title: titleCustom
 							});
 							sources.insert(sourceComboBox.store.data.length, [record]);
