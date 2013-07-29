@@ -184,10 +184,13 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
      * Shows the window with a capabilities grid.
      */
     showCapabilitiesGrid: function() {
-        if(!this.capGrid) {
+        /*if(!this.capGrid) {
             this.initCapGrid();
         }
-        this.capGrid.show();
+        this.capGrid.show();*/
+		if (!servicesSetting)
+			servicesSetting = new gxp.ServicesSetting(); 
+		servicesSetting.show();
     },
 
     /**
@@ -195,7 +198,139 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
      * Constructs a window with a capabilities grid.
      */
     initCapGrid: function() {
-        var source, data = [];        
+        
+		this.capGrid = new gxp.NewLayerWindow({            
+			modal: true,
+            listeners: {
+                "server-added": function(url, restUrl, titleCustom, icon, version) {
+					if (newSourceWindow.getServiceIDX() === 'WMS')          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+					{
+						var idx = sourceComboBox.getServiceIDX (titleCustom);
+						if (idx === -1)
+						{
+							newSourceWindow.setLoading();
+                    
+							var conf = {url: url, restUrl: restUrl, version: version?version:undefined};
+							if(titleCustom){
+								conf.title = titleCustom;
+							}
+                    
+							this.target.addLayerSource({                // !!!!!!! target !!!!!!!!
+								config: conf, // assumes default of gx_wmssource
+								callback: function(id) {
+									// add to combo and select
+									var record = new sources.recordType({
+										id: id,
+										title: this.target.layerSources[id].title || this.untitledText
+									});
+									sources.insert(0, [record]);
+									sourceComboBox.onSelect(record, 0);
+									newSourceWindow.hide();
+								},
+								fallback: function(source, msg) {
+									newSourceWindow.setError(
+										new Ext.Template(this.addLayerSourceErrorText).apply({msg: msg})
+									);
+								},
+								scope: this
+							});
+						} else {                                         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+							newSourceWindow.hide();
+							sourceComboBox.setSelection (idx);
+							sourceComboBox.onSelect(sourceComboBox.getServiceRecord(idx), idx);
+						}
+					} else if (newSourceWindow.getServiceIDX() === 'ArcGIS') {
+						if (!sourceComboBox.isServiceLoaded(titleCustom))
+						{
+							arcgisStore.reader.jsonData.servers.push({'title': titleCustom, 'url' : url});
+							var record = new sources.recordType({
+								id: 'arcgis93_' + arcgisStore.reader.jsonData.servers.length,
+								title: titleCustom
+							});
+							sources.insert(sourceComboBox.store.data.length, [record]);
+							sourceComboBox.store.data.items[sourceComboBox.store.data.length - 1].json = ['arcgis', titleCustom];
+
+							var idx = sourceComboBox.getServiceIDX (titleCustom);
+//							if ((idx >= 0) && (sourceComboBox.lastSelectionText != titleCustom))
+							if (idx >= 0)
+							{
+								newSourceWindow.setLoading();
+								sourceComboBox.setSelection (idx);
+								sourceComboBox.onSelect(record, idx);
+							}
+							OpenLayers.Request.issue({
+								method: "POST",
+								url: OVROOT+"save",
+								async: true,
+								params:{
+								    service : "arcgis"   ,
+									title   : titleCustom,
+									url     : url
+								}
+							});
+						}
+					} else if (newSourceWindow.getServiceIDX() === "GeoRSS") {
+//						console.log ('newSourceWindow.listeners : RSS - titleCustom = ' + titleCustom + ', url = ' + url);
+						var idx = sourceComboBox.getServiceIDX ('', 'rss');
+						if (idx >= 0)
+						{
+							var fname;
+							var parts = url.split("/");
+							if (parts)
+								fname = parts[parts.length-1];
+							else
+								fname = 'Unreachable';
+							if (fname.indexOf(".") > 0)
+								fname = fname.substring (0, fname.indexOf("."));
+
+							if (!rssStore.isRecordPresent (url))
+							{
+								var record = Ext.data.Record.create([
+									{name: "timer", type: "integer"},
+									{name: "name" , type: "string" },
+									{name: "title", type: "string" },
+									{name: "icon" , type: "string" },
+									{name: "url"  , type: "string" }
+								]); 
+								var data = new record({
+									timer: 0,
+									name: fname,
+									title: titleCustom,
+									icon: icon,
+									url : url
+								}); 
+							
+								rssStore.add(data);
+								// send to server => write to file
+								OpenLayers.Request.issue({
+									method: "POST",
+									url: OVROOT+"save",
+									async: true,
+									params:{
+									    service : "rss"      ,
+										name    : fname      ,
+										title   : titleCustom,
+										icon    : icon       ,
+										url     : url
+									}
+								});
+							}
+							sourceComboBox.onSelect (sourceComboBox.store.data.items[idx], idx);
+						}
+					}                                                     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                },
+                scope: this
+            }
+        });
+        
+		//newSourceWindow.show();
+		return;
+		
+		
+		
+		
+		
+		var source, data = [];        
         for (var id in this.target.layerSources) {
             source = this.target.layerSources[id];
 			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -467,129 +602,6 @@ gxp.plugins.AddLayers = Ext.extend(gxp.plugins.Tool, {
             }));
         }
         
-        var newSourceWindow = new gxp.NewSourceWindow({
-            modal: true,
-            listeners: {
-                "server-added": function(url, restUrl, titleCustom, icon, version) {
-					if (newSourceWindow.getServiceIDX() === 'WMS')          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-					{
-						var idx = sourceComboBox.getServiceIDX (titleCustom);
-						if (idx === -1)
-						{
-							newSourceWindow.setLoading();
-                    
-							var conf = {url: url, restUrl: restUrl, version: version?version:undefined};
-							if(titleCustom){
-								conf.title = titleCustom;
-							}
-                    
-							this.target.addLayerSource({                // !!!!!!! target !!!!!!!!
-								config: conf, // assumes default of gx_wmssource
-								callback: function(id) {
-									// add to combo and select
-									var record = new sources.recordType({
-										id: id,
-										title: this.target.layerSources[id].title || this.untitledText
-									});
-									sources.insert(0, [record]);
-									sourceComboBox.onSelect(record, 0);
-									newSourceWindow.hide();
-								},
-								fallback: function(source, msg) {
-									newSourceWindow.setError(
-										new Ext.Template(this.addLayerSourceErrorText).apply({msg: msg})
-									);
-								},
-								scope: this
-							});
-						} else {                                         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-							newSourceWindow.hide();
-							sourceComboBox.setSelection (idx);
-							sourceComboBox.onSelect(sourceComboBox.getServiceRecord(idx), idx);
-						}
-					} else if (newSourceWindow.getServiceIDX() === 'ArcGIS') {
-						if (!sourceComboBox.isServiceLoaded(titleCustom))
-						{
-							arcgisStore.reader.jsonData.servers.push({'title': titleCustom, 'url' : url});
-							var record = new sources.recordType({
-								id: 'arcgis93_' + arcgisStore.reader.jsonData.servers.length,
-								title: titleCustom
-							});
-							sources.insert(sourceComboBox.store.data.length, [record]);
-							sourceComboBox.store.data.items[sourceComboBox.store.data.length - 1].json = ['arcgis', titleCustom];
-
-							var idx = sourceComboBox.getServiceIDX (titleCustom);
-//							if ((idx >= 0) && (sourceComboBox.lastSelectionText != titleCustom))
-							if (idx >= 0)
-							{
-								newSourceWindow.setLoading();
-								sourceComboBox.setSelection (idx);
-								sourceComboBox.onSelect(record, idx);
-							}
-							OpenLayers.Request.issue({
-								method: "POST",
-								url: OVROOT+"save",
-								async: true,
-								params:{
-								    service : "arcgis"   ,
-									title   : titleCustom,
-									url     : url
-								}
-							});
-						}
-					} else if (newSourceWindow.getServiceIDX() === "GeoRSS") {
-//						console.log ('newSourceWindow.listeners : RSS - titleCustom = ' + titleCustom + ', url = ' + url);
-						var idx = sourceComboBox.getServiceIDX ('', 'rss');
-						if (idx >= 0)
-						{
-							var fname;
-							var parts = url.split("/");
-							if (parts)
-								fname = parts[parts.length-1];
-							else
-								fname = 'Unreachable';
-							if (fname.indexOf(".") > 0)
-								fname = fname.substring (0, fname.indexOf("."));
-
-							if (!rssStore.isRecordPresent (url))
-							{
-								var record = Ext.data.Record.create([
-									{name: "timer", type: "integer"},
-									{name: "name" , type: "string" },
-									{name: "title", type: "string" },
-									{name: "icon" , type: "string" },
-									{name: "url"  , type: "string" }
-								]); 
-								var data = new record({
-									timer: 0,
-									name: fname,
-									title: titleCustom,
-									icon: icon,
-									url : url
-								}); 
-							
-								rssStore.add(data);
-								// send to server => write to file
-								OpenLayers.Request.issue({
-									method: "POST",
-									url: OVROOT+"save",
-									async: true,
-									params:{
-									    service : "rss"      ,
-										name    : fname      ,
-										title   : titleCustom,
-										icon    : icon       ,
-										url     : url
-									}
-								});
-							}
-							sourceComboBox.onSelect (sourceComboBox.store.data.items[idx], idx);
-						}
-					}                                                     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                },
-                scope: this
-            }
-        });
         
 		
         var items = {

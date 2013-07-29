@@ -14,7 +14,7 @@
 
     //ADDED
     clearLayers: function()
-      {
+      {	  
         for(var key in this.drawLayers) {
           this.drawControls[key].deactivate();
           for(var i=0,len=this.drawLayers[key].features.length; i<len; i++){
@@ -29,7 +29,9 @@
       {
         this.clearLayers();
         if(v != 'box'){
-          this.drawControls[v].activate();
+		 if (app.mapPanel.map.getZoom() < 4) app.mapPanel.map.zoomTo(4);
+		 //app.mapPanel.map.zoomTo(3);
+		  this.drawControls[v].activate();
           var map = this.drawLayers[v].map;
           map.setLayerIndex(this.drawLayers[v], map.layers.length);
           this.drawLayers[v].setVisibility(true);
@@ -227,8 +229,8 @@
 
     /** api: method[addOutput]
      */
-    addOutput: function(config) {
-        var featureManager = this.target.tools[this.featureManager];
+    addOutput: function(config) {        
+		var featureManager = this.target.tools[this.featureManager];
         var url = featureManager.featureStore.proxy.protocol.url
         var getCapabilitiesUrlArr = url.split('/');
         getCapabilitiesUrlArr = getCapabilitiesUrlArr.splice(0, getCapabilitiesUrlArr.length - 1);
@@ -464,7 +466,7 @@
           };
 
         var queryForm = gxp.plugins.QueryForm.superclass.addOutput.call(this, config);
-        this.queryForm = queryForm;
+        this.queryForm = queryForm;		
 
         var addFilterBuilder = function(mgr, rec, schema) {
             queryForm.attributeFieldset.removeAll();

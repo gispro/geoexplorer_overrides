@@ -195,7 +195,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 					menuDisabled: true, 
 					renderer: function(value, metaData, record, rowIdx, colIdx, store) { 
 						var checked = "";
-						if (record.data.is_default) {checked="checked=true"}
+						if (record.data.is_default===true || record.data.is_default==="t") {checked="checked=true"}
 						return '<input '+ checked + ' onchange=Ext.getCmp("chartGridPanel").setDefault('+rowIdx+') type=radio name=def>';
 					} 
 				},				
@@ -218,7 +218,7 @@ gxp.plugins.ChartManager = Ext.extend(gxp.plugins.Tool, {
 								scope: this,
 								handler: function(grid, rowIndex, colIndex) {
 									var rec = grid.getStore().getAt(rowIndex);
-									if (!rec.data.is_default) {
+									if (rec.data.is_default!="t") {
 										askForDelete(rec, this);
 									} else {
 										Ext.Msg.alert(this.deleteErrorHeader, this.deleteErrorText);

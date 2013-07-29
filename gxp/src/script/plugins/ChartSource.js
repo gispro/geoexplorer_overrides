@@ -12,6 +12,11 @@ var chartStore = new Ext.data.JsonStore({
     {
    		load : function(options)
    		{
+			this.data.items.every(function(el){
+				if (typeof( el.data.is_default)=="boolean") return true;
+				el.data.is_default =  el.data.is_default=="t" ? true : false
+				return true;
+			})
 			chartRoot.load(options);
    		},
 		loadexception : function(o, arg, nul, e)
@@ -52,7 +57,7 @@ gxp.plugins.ChartSource = Ext.extend(gxp.plugins.LayerSource,
 	
 	getDefaultChart : function() {
 		for (var i=0; i< this.chartStore.data.length; i++) {
-			if (chartStore.data.items[i].json.isDefault) {
+			if (chartStore.data.items[i].json.is_default=="t" || chartStore.data.items[i].json.is_default===true) {
 				return chartStore.data.items[i].json;
 			}
 		}		
